@@ -1,6 +1,8 @@
-
+//import { GUI } from 'dat.gui';
 import * as THREE from 'three';
 import { OrbitControls } from './build/controls/OrbitControls.js';
+
+ 
 
 //create the scene
 var scene = new THREE.Scene( );
@@ -16,6 +18,9 @@ camera.position.set(0,0,15);
 
 //create the webgl renderer
 var renderer = new THREE.WebGLRenderer( );
+
+
+// const gui = new GUI();
 
 //set the size of the rendering window
 renderer.setSize(window.innerWidth,window.innerHeight);
