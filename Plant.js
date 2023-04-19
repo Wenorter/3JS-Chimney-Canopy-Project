@@ -14,6 +14,10 @@ var scene, ratio, camera;
 var ambientLight, ambientLightColour, dirLight, dirLightColour;
 var plantFirstColour, plantSecondColour, plantThirdColour;
 
+
+
+
+
 //parameters for GUI
 let params = {
   ambientLightColour: ambientLightColour,
@@ -22,6 +26,10 @@ let params = {
   plantSecondColour: plantSecondColour,
   plantThirdColour: plantThirdColour
 }
+
+
+
+
 
 //create the scene
 scene = new THREE.Scene();
@@ -34,6 +42,48 @@ camera.position.set(0,50,50);
 // and the direction
 camera.lookAt(0,0,0);
 
+//create the webgl renderer
+const renderer = new THREE.WebGLRenderer();
+
+renderer.shadowMap.enabled = true;
+//set the size of the rendering window
+renderer.setSize(window.innerWidth,window.innerHeight);
+
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+//add the renderer to the current document
+document.body.appendChild(renderer.domElement);
+
+//////////////
+// CONTROLS //
+//////////////
+
+// move mouse and: left   click to rotate,
+//                 middle click to zoom,
+//                 right  click to pan
+// add the new control and link to the current camera to transform its position
+
+var controls = new OrbitControls(camera, renderer.domElement );
+
+const PlaneGeometry = new THREE.PlaneGeometry(30, 32, 32);
+const PlaneMaterial = new THREE.MeshLambertMaterial({
+  color: 0xFFFFFF,
+  side: THREE.DoubleSide
+});
+const Plane = new THREE.Mesh(PlaneGeometry, PlaneMaterial);
+scene.add(Plane);
+Plane.rotation.x = -0.5 * Math.PI;
+Plane.receiveShadow = true;
+
+const SphereGeometry = new THREE.SphereGeometry(5, 32, 32);
+const SphereMaterial = new THREE.MeshPhongMaterial({color: 0x0000FF})
+const Sphere = new THREE.Mesh(SphereGeometry, SphereMaterial);
+scene.add(Sphere);
+Sphere.position.set(-4,8,-1);
+Sphere.castShadow = true;
+
+
+
 //========DEBUG===========
 function createScene(){
   initLights();
@@ -45,14 +95,29 @@ createScene();
 
 //Lighting
 function initLights(){
+  
   //dark pink - Amaranth shade
   //const ambientLightColour = new THREE.Color(159, 43, 104);
-  ambientLight = new THREE.AmbientLight(new THREE.Color(159,43,104), 0.05);
+  const ambientLight = new THREE.AmbientLight(new THREE.Color(159,43,104), 0.05);
   scene.add(ambientLight);
+  
 
   //orange - Coral shade
-  dirLight = new THREE.DirectionalLight(new THREE.Color(255,127,80), 0.005);
-  dirLight.position.set(0, 500, 500);
+  const dirLight = new THREE.DirectionalLight(new THREE.Color(255,189,80), 0.005);
+  //const dirLight = new THREE.DirectionalLight(0xFFFFFF, 0.8);
+  scene.add(dirLight);
+  dirLight.position.set(-10, 50, 5);
+  dirLight.castShadow = true;
+  dirLight.shadow.camera.bottom = -12
+
+  const dLightHelper = new THREE.DirectionalLightHelper(dirLight, 5);
+  scene.add(dLightHelper);
+
+  const dLightShadowHelper = new THREE.CameraHelper(dirLight.shadow.camera);
+  scene.add(dLightShadowHelper);
+
+
+
 }
 
 //Base Ground Model
@@ -101,26 +166,7 @@ function renderGui()
   //colourFolder.add(mesh.rotation, "z", 0, Math.PI * 2, 0.001).name("Regenerate");
 }
 
-//create the webgl renderer
-var renderer = new THREE.WebGLRenderer();
-//set the size of the rendering window
-renderer.setSize(window.innerWidth,window.innerHeight);
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-//add the renderer to the current document
-document.body.appendChild(renderer.domElement);
-
-//////////////
-// CONTROLS //
-//////////////
-
-// move mouse and: left   click to rotate,
-//                 middle click to zoom,
-//                 right  click to pan
-// add the new control and link to the current camera to transform its position
-
-var controls = new OrbitControls(camera, renderer.domElement );
 
 
 function animate(){
