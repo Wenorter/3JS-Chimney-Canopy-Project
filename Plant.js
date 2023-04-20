@@ -5,6 +5,9 @@ import {OrbitControls} from './build/OrbitControls.js';
 import {FBXLoader} from './build/FBXLoader.js';
 import {NURBSCurve} from './build/NURBSCurve.js';
 
+
+
+
 //==================================
 //=======Lindenmayer Plant==========
 //==================================
@@ -28,7 +31,8 @@ let params = {
 }
 
 
-
+const image = new Image();
+image.src = '../Images/Background3JS.jpeg';
 
 
 //create the scene
@@ -82,8 +86,14 @@ scene.add(Sphere);
 Sphere.position.set(-4,14,-1);
 Sphere.castShadow = true;
 
-
+//adding basic fod effect
 scene.fog = new THREE.Fog(0xFFFFFF, 0, 200);
+
+
+//adding textures for background
+const textureLoader = new THREE.TextureLoader();
+//scene.background = textureLoader.load(image);
+
 
 //========DEBUG===========
 function createScene(){
@@ -116,6 +126,8 @@ function initLights(){
 
   const dLightShadowHelper = new THREE.CameraHelper(dirLight.shadow.camera);
   scene.add(dLightShadowHelper);
+
+
 
 
 }
