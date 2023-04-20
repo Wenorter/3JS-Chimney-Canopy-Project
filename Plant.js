@@ -31,8 +31,8 @@ let params = {
 }
 
 
-const image = new Image();
-image.src = '../Images/Background3JS.jpeg';
+//const image = new Image();
+//image.src = ;
 
 
 //create the scene
@@ -69,6 +69,13 @@ document.body.appendChild(renderer.domElement);
 
 var controls = new OrbitControls(camera, renderer.domElement );
 
+//adding textures 
+const texture = new THREE.TextureLoader().load(
+  '../Images/Background3JS.jpeg');
+//scene.background.TextureLoader;
+
+
+
 const PlaneGeometry = new THREE.PlaneGeometry(32, 32);
 const PlaneMaterial = new THREE.MeshLambertMaterial({
   color: 0xFFFFFF,
@@ -80,7 +87,8 @@ Plane.rotation.x = -0.5 * Math.PI;
 Plane.receiveShadow = true;
 
 const SphereGeometry = new THREE.SphereGeometry(5, 32, 32);
-const SphereMaterial = new THREE.MeshPhongMaterial({color: 0x0000FF})
+const SphereMaterial = new THREE.MeshPhongMaterial({color: 0x0000FF, map: texture
+})
 const Sphere = new THREE.Mesh(SphereGeometry, SphereMaterial);
 scene.add(Sphere);
 Sphere.position.set(-4,14,-1);
@@ -89,10 +97,6 @@ Sphere.castShadow = true;
 //adding basic fod effect
 scene.fog = new THREE.Fog(0xFFFFFF, 0, 200);
 
-
-//adding textures for background
-const textureLoader = new THREE.TextureLoader();
-//scene.background = textureLoader.load(image);
 
 
 //========DEBUG===========
