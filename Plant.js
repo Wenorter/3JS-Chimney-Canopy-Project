@@ -14,6 +14,7 @@ var scene, ratio, camera;
 var ambientLight, ambientLightColour, dirLight, dirLightColour;
 var plantFirstColour, plantSecondColour, plantThirdColour;
 
+
 //parameters for GUI
 let params = {
   ambientLightColour: ambientLightColour,
