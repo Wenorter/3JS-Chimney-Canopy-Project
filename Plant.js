@@ -65,7 +65,7 @@ document.body.appendChild(renderer.domElement);
 
 var controls = new OrbitControls(camera, renderer.domElement );
 
-const PlaneGeometry = new THREE.PlaneGeometry(30, 32, 32);
+const PlaneGeometry = new THREE.PlaneGeometry(32, 32);
 const PlaneMaterial = new THREE.MeshLambertMaterial({
   color: 0xFFFFFF,
   side: THREE.DoubleSide
@@ -79,8 +79,9 @@ const SphereGeometry = new THREE.SphereGeometry(5, 32, 32);
 const SphereMaterial = new THREE.MeshPhongMaterial({color: 0x0000FF})
 const Sphere = new THREE.Mesh(SphereGeometry, SphereMaterial);
 scene.add(Sphere);
-Sphere.position.set(-4,8,-1);
+Sphere.position.set(-4,14,-1);
 Sphere.castShadow = true;
+
 
 
 
@@ -115,7 +116,6 @@ function initLights(){
 
   const dLightShadowHelper = new THREE.CameraHelper(dirLight.shadow.camera);
   scene.add(dLightShadowHelper);
-
 
 
 }
@@ -153,6 +153,14 @@ function renderGui()
 {
   const gui = new GUI();
 
+  const options = {
+    sphereColor: '#ffea00',
+    angle: 0.2,
+    penumbra: 0,
+    intensity: 1,
+
+
+  }
   //colour change
   let rotationFolder = gui.addFolder("Scene Rotation");
   //rotationFolder.add(chimneyCanopyBase.rotation,"x", 0, Math.PI * 2, 0.001).name("First Colour");
@@ -164,6 +172,15 @@ function renderGui()
   //colourFolder.add(mesh.rotation, "y", 0, Math.PI * 2, 0.001).name("Secondary Clour");
   //colourFolder.add(mesh.rotation, "z", 0, Math.PI * 2, 0.001).name("Accent Colour");
   //colourFolder.add(mesh.rotation, "z", 0, Math.PI * 2, 0.001).name("Regenerate");
+
+  let SphereFolder = gui.addFolder("Sphere Management");
+  SphereFolder.addColor(options, 'sphereColor');
+
+  //below three gui options are for the light
+  let LightFolder = gui.addFolder("Light Attributes Management");
+  LightFolder.add(options, 'angle', 0, 1)
+  LightFolder.add(options, 'penumbra', 0, 1)
+  LightFolder.add(options, 'intensity', 0, 1)
 }
 
 
@@ -214,6 +231,9 @@ camera.aspect = width/height;
 camera.updateProjectionMatrix();
 renderer.render(scene,camera);
 };
+
+
+
 
 //link the resize of the window to the update of the camera
 window.addEventListener('resize', MyResize);
