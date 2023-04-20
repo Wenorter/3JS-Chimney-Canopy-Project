@@ -83,7 +83,7 @@ Sphere.position.set(-4,14,-1);
 Sphere.castShadow = true;
 
 
-
+scene.fog = new THREE.Fog(0xFFFFFF, 0, 200);
 
 //========DEBUG===========
 function createScene(){
@@ -174,13 +174,18 @@ function renderGui()
   //colourFolder.add(mesh.rotation, "z", 0, Math.PI * 2, 0.001).name("Regenerate");
 
   let SphereFolder = gui.addFolder("Sphere Management");
-  SphereFolder.addColor(options, 'sphereColor');
+  SphereFolder.addColor(options, 'sphereColor').onChange(function(e){
+    Sphere.material.color.set(e)
+  });
 
   //below three gui options are for the light
   let LightFolder = gui.addFolder("Light Attributes Management");
   LightFolder.add(options, 'angle', 0, 1)
   LightFolder.add(options, 'penumbra', 0, 1)
   LightFolder.add(options, 'intensity', 0, 1)
+
+  
+
 }
 
 
@@ -205,6 +210,11 @@ function animate(){
   controls.update();
 
   requestAnimationFrame(animate);
+
+  dirLight.angle = options.angle;
+  //dirLight.angle = options.angle;
+  dirLight.intensity = options.intensity;
+
 }
 
 //final update loop
