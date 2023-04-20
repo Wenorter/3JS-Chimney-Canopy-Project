@@ -72,7 +72,9 @@ var controls = new OrbitControls(camera, renderer.domElement );
 //adding textures 
 const texture = new THREE.TextureLoader().load(
   '../Images/Background3JS.jpeg');
-//scene.background.TextureLoader;
+
+ //background texture 
+scene.background = texture;
 
 
 
@@ -87,7 +89,7 @@ Plane.rotation.x = -0.5 * Math.PI;
 Plane.receiveShadow = true;
 
 const SphereGeometry = new THREE.SphereGeometry(5, 32, 32);
-const SphereMaterial = new THREE.MeshPhongMaterial({color: 0x0000FF, map: texture
+const SphereMaterial = new THREE.MeshPhongMaterial({color: 0x0000FF, /*terxture for sphere */ map: texture
 })
 const Sphere = new THREE.Mesh(SphereGeometry, SphereMaterial);
 scene.add(Sphere);
