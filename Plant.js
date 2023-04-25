@@ -70,11 +70,25 @@ document.body.appendChild(renderer.domElement);
 var controls = new OrbitControls(camera, renderer.domElement );
 
 //adding textures 
-const texture = new THREE.TextureLoader().load(
-  '../Images/Background3JS.jpeg');
+//const texture = new THREE.TextureLoader().load(
+  //'../Images/Background3JS.jpeg');
 
  //background texture 
-scene.background = texture;
+//scene.background = texture;
+const cubeTextureLoader = new THREE.CubeTextureLoader();
+scene.background = cubeTextureLoader.load([
+  '../Images/Skybox1/Skybox1Right.png',
+  '../Images/Skybox1/Skybox1Left.png',
+  
+  '../Images/Skybox1/Skybox1Up.png',
+  '../Images/Skybox1/Skybox1Down.png',
+  '../Images/Skybox1/Skybox1Front.png',
+  '../Images/Skybox1/Skybox1Back.png',
+  
+  
+  
+
+])
 
 
 
