@@ -80,20 +80,22 @@ scene.background = texture;
 
 const PlaneGeometry = new THREE.PlaneGeometry(32, 32);
 const PlaneMaterial = new THREE.MeshLambertMaterial({
-  color: 0xFFFFFF,
+  color: 0xFFFFF,
   side: THREE.DoubleSide
 });
 const Plane = new THREE.Mesh(PlaneGeometry, PlaneMaterial);
 scene.add(Plane);
 Plane.rotation.x = -0.5 * Math.PI;
-Plane.receiveShadow = true;
+//Plane.castShadow = true;
+Plane.recieveShadow = true;
 
 const SphereGeometry = new THREE.SphereGeometry(5, 32, 32);
-const SphereMaterial = new THREE.MeshPhongMaterial({color: 0x0000FF, /*terxture for sphere */ map: texture
+const SphereMaterial = new THREE.MeshPhongMaterial({color: 0x0000FF, /*terxture for sphere */ //map: texture
 })
 const Sphere = new THREE.Mesh(SphereGeometry, SphereMaterial);
 scene.add(Sphere);
 Sphere.position.set(-4,14,-1);
+//Sphere.recieveShadow = true;
 Sphere.castShadow = true;
 
 //adding basic fod effect
@@ -125,7 +127,7 @@ function initLights(){
   scene.add(dirLight);
   dirLight.position.set(-10, 50, 5);
   dirLight.castShadow = true;
-  dirLight.shadow.camera.bottom = -12
+  //dirLight.shadow.camera.bottom = -12
 
   const dLightHelper = new THREE.DirectionalLightHelper(dirLight, 5);
   scene.add(dLightHelper);
