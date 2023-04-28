@@ -29,9 +29,9 @@ scene = new THREE.Scene();
 ratio = window.innerWidth/window.innerHeight;
 //create the perspective camera
 //for parameters see https://threejs.org/docs/#api/cameras/PerspectiveCamera
-camera = new THREE.PerspectiveCamera(45, ratio, 0.1, 1000);
+camera = new THREE.PerspectiveCamera(55, ratio, 45, 30000); //Ryu- the original value is (45, ration, 0.1, 1000);
 //set the camera position
-camera.position.set(0,50,50);
+camera.position.set(-900,-200,-900);//original value was( 0, 50, 50)
 // and the direction
 camera.lookAt(0,0,0);
 
@@ -55,6 +55,34 @@ function initLights(){
   dirLight = new THREE.DirectionalLight(new THREE.Color(255,127,80), 0.005);
   dirLight.position.set(0, 500, 500);
 }
+
+//skybox - desert skybox
+function skybox(){
+let materialArray = [];
+let texture_ft = new THREE.TextureLoader().load('Image/Skybox2/desertdawn_ft.jpg');
+let texture_bk = new THREE.TextureLoader().load('Image/Skybox2/desertdawn_bk.jpg');
+let texture_up = new THREE.TextureLoader().load('Image/Skybox2/desertdawn_up.jpg');
+let texture_dn = new THREE.TextureLoader().load('Image/Skybox2/desertdawn_dn.jpg');
+let texture_rt = new THREE.TextureLoader().load('Image/Skybox2/desertdawn_rt.jpg');
+let texture_lf = new THREE.TextureLoader().load('Image/Skybox2/desertdawn_lf.jpg');
+
+materialArray.push(new THREE.MeshBasicMaterial({map: texture_ft}));
+materialArray.push(new THREE.MeshBasicMaterial({map: texture_bk}));
+materialArray.push(new THREE.MeshBasicMaterial({map: texture_up}));
+materialArray.push(new THREE.MeshBasicMaterial({map: texture_dn}));
+materialArray.push(new THREE.MeshBasicMaterial({map: texture_rt}));
+materialArray.push(new THREE.MeshBasicMaterial({map: texture_lf}));
+
+//set texture inside of the box 
+for(let i=0; i<6; i++)
+   materialArray[i].side = THREE.BackSide;
+let skyboxGeo = new THREE.BoxGeometry(10000, 10000, 10000);
+let skybox = new THREE.Mesh(skyboxGeo, materialArray);
+scene.add(skybox);
+//animate(); //mesh in animate function is not defined 
+}
+skybox();
+
 
 //Base Ground Model
 function initFBXModel(){
@@ -84,6 +112,8 @@ function initFBXModel(){
   });
 }
 
+
+
 //Dat GUI
 function renderGui()
 {
@@ -103,7 +133,7 @@ function renderGui()
 }
 
 //create the webgl renderer
-var renderer = new THREE.WebGLRenderer();
+var renderer = new THREE.WebGLRenderer({antialias:true});
 //set the size of the rendering window
 renderer.setSize(window.innerWidth,window.innerHeight);
 renderer.shadowMap.enabled = true;
@@ -122,7 +152,9 @@ document.body.appendChild(renderer.domElement);
 // add the new control and link to the current camera to transform its position
 
 var controls = new OrbitControls(camera, renderer.domElement );
-
+//limit control so user won't exit the outside of the skybox 
+controls.minDistance = 500;
+controls.maxDistance = 1500;
 
 function animate(){
   //it's very important to clear the scene!
