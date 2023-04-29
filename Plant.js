@@ -52,12 +52,35 @@ var controls = new OrbitControls(camera, renderer.domElement );
 
 //========DEBUG===========
 initLights();
-//loadTestSphere();
 loadSkybox();
+//loadTestSphere();
 loadBaseGroundModel();
+loadLizard();
 renderGui();
 animate();
 //========================
+
+//Handle window resize
+function onWindowResize() 
+{
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    controls.handleResize();
+}
+
+window.addEventListener('resize', onWindowResize);
+
+//Lighting
+function initLights(){
+  ambLight = new THREE.AmbientLight(ambLightColour, ambLightInten);
+  scene.add(ambLight);
+
+  dirLight = new THREE.DirectionalLight(dirLightColour, dirLightInten);
+  dirLight.position.set(0, 500, 500);
+  scene.add(dirLight);
+}
 
 function loadSkybox(){
   //adding textures 
@@ -105,14 +128,27 @@ scene.add(sphere);
 //Note: we don't need fog, consider removing it
 //scene.fog = new THREE.Fog(0xFFFFFF, 0, 200);
 
-//Lighting
-function initLights(){
-  ambLight = new THREE.AmbientLight(ambLightColour, ambLightInten);
-  scene.add(ambLight);
+//Lizard decoration
+function loadLizard(){
+  const fbxLoader = new FBXLoader();
+  fbxLoader.setResourcePath("./textures/pink_lizard/");
+  fbxLoader.load('./model/pink_lizard.fbx', function(lizard) {
 
-  dirLight = new THREE.DirectionalLight(dirLightColour, dirLightInten);
-  dirLight.position.set(0, 500, 500);
-  scene.add(dirLight);
+    lizard.traverse(function(child){
+      if (child.isMesh) 
+      {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    } 
+  );
+
+  lizard.userData.name = "Pink Lizard";
+  lizard.scale.setScalar(0.12);
+  lizard.position.set(-10, 2.2, -10);
+  lizard.rotation.set(-190, 0, 90);
+  scene.add(lizard);
+});
 }
 
 // --- Sounds ---
@@ -138,8 +174,9 @@ stratButton.remove();//once user click it, delete button.
 //Base Ground Model
 function loadBaseGroundModel(){
 
-      const fbXLoader = new FBXLoader();
-      fbXLoader.load('./model/chimney_canopy_base.fbx', function(chimneyCanopyBase) {
+      const fbxLoader = new FBXLoader();
+      fbxLoader.setResourcePath("./textures/base/");
+      fbxLoader.load('./model/chimney_canopy_base.fbx', function(chimneyCanopyBase) {
 
       chimneyCanopyBase.traverse(function(child){
           if (child.isMesh) 
@@ -150,6 +187,7 @@ function loadBaseGroundModel(){
         } 
       );
 
+      chimneyCanopyBase.userData.name = "Chimney Canopy Base";
       chimneyCanopyBase.scale.setScalar(0.04);
       dirLight.target = chimneyCanopyBase;
       scene.add(chimneyCanopyBase);
@@ -203,7 +241,7 @@ function renderGui()
   })
   dirLightFolder.add(col, "dirLightInten", 0, 1, 0.005).name("Dir Light Intensity").onChange(() => 
   {
-    dirLight.intensity.set(col.dirLightInten);
+    dirLight.intensity = col.dirLightInten;
   })
   //colourFolder.addColor(col, "ambLightColour").name("Ambient Light").onChange(() => 
   //{
