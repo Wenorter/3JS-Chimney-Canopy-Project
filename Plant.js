@@ -56,6 +56,7 @@ function initLights(){
   dirLight.position.set(0, 500, 500);
 }
 
+/*
 //skybox - desert skybox
 function skybox(){
 let materialArray = [];
@@ -82,7 +83,7 @@ scene.add(skybox);
 //animate(); //mesh in animate function is not defined 
 }
 skybox();
-
+*/
 
 //Base Ground Model
 function initFBXModel(){
