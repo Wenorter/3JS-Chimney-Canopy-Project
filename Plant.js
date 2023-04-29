@@ -132,6 +132,7 @@ audioLoader.load('./sounds/sandyBeach.mp3', function(buffer){
   sound.setVolume( 0.5 );
   sound.play();
 });
+stratButton.remove();//once user click it, delete button. 
 }
 
 //Base Ground Model
