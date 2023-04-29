@@ -115,6 +115,19 @@ function initLights(){
   scene.add(dirLight);
 }
 
+// --- Sounds ---
+const listener = new THREE.AudioListener();
+//laod audio file 
+camera.add( listener );
+const sound = new THREE.Audio(listener);
+const audioLoader = new THREE.AudioLoader();
+audioLoader.load('./sounds/sandyBeach.mp3', function(buffer){
+  sound.setBuffer( buffer );
+  sound.setLoop( true );
+  sound.setVolume( 0.5 );
+  sound.play();
+});
+
 //Base Ground Model
 function loadBaseGroundModel(){
 
