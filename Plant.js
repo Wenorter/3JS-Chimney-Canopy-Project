@@ -87,7 +87,7 @@ function loadTestSphere(){
 plane = new THREE.Mesh(planeGeometry, planeMaterial);
 plane.rotation.x = -0.5 * Math.PI;
 //Plane.castShadow = true;
-plane.recieveShadow = true;
+plane.receiveShadow = true;
 scene.add(plane);
 
 const sphereGeometry = new THREE.SphereGeometry(5, 32, 32);
@@ -95,7 +95,7 @@ const sphereMaterial = new THREE.MeshPhongMaterial({color: 0x0000FF, /*texture f
 })
 const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
 sphere.castShadow = true;
-//Sphere.recieveShadow = true;
+//Sphere.receiveShadow = true;
 sphere.position.set(-4,14,-1);
 
 scene.add(sphere);
