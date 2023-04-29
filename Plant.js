@@ -9,199 +9,223 @@ import {NURBSCurve} from './build/NURBSCurve.js';
 //=======Lindenmayer Plant==========
 //==================================
 
-var chimneyCanopyBase;
-var scene, ratio, camera;
-var ambientLight, ambientLightColour, dirLight, dirLightColour;
+//defaults
+let chimneyCanopyBase;
+let scene, ratio, camera;
+let renderer;
+
+var ambLight, ambLightColour, ambLightInten;
+var dirLight, dirLightColour,dirLightInten;
 var plantFirstColour, plantSecondColour, plantThirdColour;
+var backgroundColour;
+
+let plane;
 
 
-//parameters for GUI
-let params = {
-  ambientLightColour: ambientLightColour,
-  dirLightColour: dirLightColour,
-  plantFirstColour: plantFirstColour,
-  plantSecondColour: plantSecondColour,
-  plantThirdColour: plantThirdColour
-}
+//const image = new Image();
+//image.src = ;
 
 //create the scene
 scene = new THREE.Scene();
 ratio = window.innerWidth/window.innerHeight;
 //create the perspective camera
 //for parameters see https://threejs.org/docs/#api/cameras/PerspectiveCamera
-camera = new THREE.PerspectiveCamera(55, ratio, 45, 30000); //Ryu- the original value is (45, ration, 0.1, 1000);
+camera = new THREE.PerspectiveCamera(45, ratio, 0.1, 1000);
 //set the camera position
-camera.position.set(-900,-200,-900);//original value was( 0, 50, 50)
+camera.position.set(0,50,50);
 // and the direction
 camera.lookAt(0,0,0);
 
+//Create the webgl renderer
+renderer = new THREE.WebGLRenderer();
+renderer.antialias = true;
+renderer.precision = "highp";
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.powerPreference = "high-performance";
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(window.innerWidth,window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+//Controls
+var controls = new OrbitControls(camera, renderer.domElement );
+
 //========DEBUG===========
-function createScene(){
-  initLights();
-  initFBXModel();
-  renderGui();
-}
-createScene();
+initLights();
+//loadTestSphere();
+loadSkybox();
+loadBaseGroundModel();
+renderGui();
+animate();
 //========================
+
+function loadSkybox(){
+  //adding textures 
+  //const texture = new THREE.TextureLoader().load(
+  //'../Images/Background3JS.jpeg');
+
+  //background texture 
+  //scene.background = texture;
+  const cubeTextureLoader = new THREE.CubeTextureLoader();
+  scene.background = cubeTextureLoader.load([
+    './images/rwcc/right.png',
+    './images/rwcc/left.png',
+    './images/rwcc/up.png',
+    './images/rwcc/bottom.png',
+    './images/rwcc/front.png',
+    './images/rwcc/back.png',
+  ])
+}
+
+function loadTestSphere(){
+  const planeGeometry = new THREE.PlaneGeometry(32, 32);
+  const planeMaterial = new THREE.MeshLambertMaterial({
+    color: 0xFFFFF,
+    side: THREE.DoubleSide
+  });
+
+plane = new THREE.Mesh(planeGeometry, planeMaterial);
+plane.rotation.x = -0.5 * Math.PI;
+//Plane.castShadow = true;
+plane.recieveShadow = true;
+scene.add(plane);
+
+const sphereGeometry = new THREE.SphereGeometry(5, 32, 32);
+const sphereMaterial = new THREE.MeshPhongMaterial({color: 0x0000FF, /*texture for sphere */ //map: texture
+})
+const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+sphere.castShadow = true;
+//Sphere.recieveShadow = true;
+sphere.position.set(-4,14,-1);
+
+scene.add(sphere);
+}
+
+//adding basic fod effect
+//Note: we don't need fog, consider removing it
+//scene.fog = new THREE.Fog(0xFFFFFF, 0, 200);
 
 //Lighting
 function initLights(){
-  //dark pink - Amaranth shade
-  //const ambientLightColour = new THREE.Color(159, 43, 104);
-  ambientLight = new THREE.AmbientLight(new THREE.Color(159,43,104), 0.05);
-  scene.add(ambientLight);
+  ambLight = new THREE.AmbientLight(ambLightColour, ambLightInten);
+  scene.add(ambLight);
 
-  //orange - Coral shade
-  dirLight = new THREE.DirectionalLight(new THREE.Color(255,127,80), 0.005);
+  dirLight = new THREE.DirectionalLight(dirLightColour, dirLightInten);
   dirLight.position.set(0, 500, 500);
+  scene.add(dirLight);
 }
-
-/*
-//skybox - desert skybox
-function skybox(){
-let materialArray = [];
-let texture_ft = new THREE.TextureLoader().load('Image/Skybox2/desertdawn_ft.jpg');
-let texture_bk = new THREE.TextureLoader().load('Image/Skybox2/desertdawn_bk.jpg');
-let texture_up = new THREE.TextureLoader().load('Image/Skybox2/desertdawn_up.jpg');
-let texture_dn = new THREE.TextureLoader().load('Image/Skybox2/desertdawn_dn.jpg');
-let texture_rt = new THREE.TextureLoader().load('Image/Skybox2/desertdawn_rt.jpg');
-let texture_lf = new THREE.TextureLoader().load('Image/Skybox2/desertdawn_lf.jpg');
-
-materialArray.push(new THREE.MeshBasicMaterial({map: texture_ft}));
-materialArray.push(new THREE.MeshBasicMaterial({map: texture_bk}));
-materialArray.push(new THREE.MeshBasicMaterial({map: texture_up}));
-materialArray.push(new THREE.MeshBasicMaterial({map: texture_dn}));
-materialArray.push(new THREE.MeshBasicMaterial({map: texture_rt}));
-materialArray.push(new THREE.MeshBasicMaterial({map: texture_lf}));
-
-//set texture inside of the box 
-for(let i=0; i<6; i++)
-   materialArray[i].side = THREE.BackSide;
-let skyboxGeo = new THREE.BoxGeometry(10000, 10000, 10000);
-let skybox = new THREE.Mesh(skyboxGeo, materialArray);
-scene.add(skybox);
-//animate(); //mesh in animate function is not defined 
-}
-skybox();
-*/
 
 //Base Ground Model
-function initFBXModel(){
+function loadBaseGroundModel(){
 
-  const fbxLoader = new FBXLoader();
-  fbxLoader.load('./model/chimney_canopy_base.fbx', function(object) {
+      const fbXLoader = new FBXLoader();
+      fbXLoader.load('./model/chimney_canopy_base.fbx', function(chimneyCanopyBase) {
 
-    //object.mixer = new THREE.AnimationMixer(object);
-    //mixers.push(object.mixer);
+      chimneyCanopyBase.traverse(function(child){
+          if (child.isMesh) 
+          {
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+        } 
+      );
 
-    //var action = object.mixer.clipAction( object.animations[ 0 ] );
-    //action.play();
-
-    object.traverse(function(child) {
-      if (child.isMesh) {
-        child.castShadow = true;
-        child.receiveShadow = true;
-      }
-    } );
-
-    chimneyCanopyBase = object;
-    //object.rotation.set(0, 200, 0);
-    object.scale.set(0.04, 0.04, 0.04);
-    dirLight.target = object;
-    scene.add(dirLight);
-    scene.add(object);
-  });
+      chimneyCanopyBase.scale.setScalar(0.04);
+      dirLight.target = chimneyCanopyBase;
+      scene.add(chimneyCanopyBase);
+    });
 }
-
-
 
 //Dat GUI
 function renderGui()
 {
   const gui = new GUI();
 
-  //colour change
-  let rotationFolder = gui.addFolder("Scene Rotation");
-  //rotationFolder.add(chimneyCanopyBase.rotation,"x", 0, Math.PI * 2, 0.001).name("First Colour");
-  //rotationFolder.add(chimneyCanopyBase.rotation, "y", 0, Math.PI * 2, 0.001).name("Secondary Clour");
-  //rotationFolder.add(chimneyCanopyBase.rotation, "z", 0, Math.PI * 2, 0.001).name("Accent Colour");
+  //parameters for GUI
+  //Test shere
+  let options = {
+    sphereColor: '#ffea00',
+    angle: 0.2,
+    penumbra: 0,
+    intensity: 1,
+  }
+
+
+//colour variables
+  let col = {
+    ambLightColour: 0xe52b50,  //dark pink - Amaranth shade
+    ambLightInten: 0.05,
+    dirLightColour: 0xfd8535, //orange - Coral shade
+    dirLightInten: 0.05,
+    plantFirstColour: 0xffffff, //white
+    plantSecondColour: 0xffffff, //white
+    plantThirdColour: 0xffffff //white
+  }
+
 
   let colourFolder = gui.addFolder("Scene Colour Management");
-  //colourFolder.add(mesh.rotation,"x", 0, Math.PI * 2, 0.001).name("First Colour");
+
+  let ambLightFolder = colourFolder.addFolder("Ambient Light Control");
+  ambLightFolder.addColor(col, "ambLightColour").name("AL Colour").onChange(() => 
+  {
+      ambLight.color.setHex(col.ambLightColour);
+  });
+  ambLightFolder.add(col, "ambLightInten", 0, 10, 0.005).name("AL Intensity").onChange(() =>
+  {
+      ambLight.intensity = col.ambLightInten;
+  });
+
+  //scene colour change
+  let dirLightFolder = colourFolder.addFolder("Directional Light Control");
+  dirLightFolder.addColor(col, "dirLightColour").name("Directional Light").onChange(() => 
+  {
+    dirLight.color.setHex(col.dirLightColour);
+  })
+  dirLightFolder.add(col, "dirLightInten", 0, 1, 0.005).name("Dir Light Intensity").onChange(() => 
+  {
+    dirLight.intensity.set(col.dirLightInten);
+  })
+  //colourFolder.addColor(col, "ambLightColour").name("Ambient Light").onChange(() => 
+  //{
+    //ambLight.color.set(col.ambLightColour);
+  //})
+  //colourFolder.add(col, "ambLightColour", 0, 1, 0.005).name("AL Intensity");
+
   //colourFolder.add(mesh.rotation, "y", 0, Math.PI * 2, 0.001).name("Secondary Clour");
   //colourFolder.add(mesh.rotation, "z", 0, Math.PI * 2, 0.001).name("Accent Colour");
   //colourFolder.add(mesh.rotation, "z", 0, Math.PI * 2, 0.001).name("Regenerate");
+
+  //let SphereFolder = gui.addFolder("Sphere Management");
+  //SphereFolder.addColor(options, 'sphereColor').onChange(function(e){
+    //Sphere.material.color.set(e)
+  //});
+
+  //below three gui options are for the light
+  let lightFolder = gui.addFolder("Light Attributes Management");
+  lightFolder.add(options, 'angle', 0, 1)
+  lightFolder.add(options, 'penumbra', 0, 1)
+  lightFolder.add(options, 'intensity', 0, 1)
 }
-
-//create the webgl renderer
-var renderer = new THREE.WebGLRenderer({antialias:true});
-//set the size of the rendering window
-renderer.setSize(window.innerWidth,window.innerHeight);
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-//add the renderer to the current document
-document.body.appendChild(renderer.domElement);
-
-//////////////
-// CONTROLS //
-//////////////
-
-// move mouse and: left   click to rotate,
-//                 middle click to zoom,
-//                 right  click to pan
-// add the new control and link to the current camera to transform its position
-
-var controls = new OrbitControls(camera, renderer.domElement );
-//limit control so user won't exit the outside of the skybox 
-controls.minDistance = 500;
-controls.maxDistance = 1500;
 
 function animate(){
-  //it's very important to clear the scene!
-  //otherwise it has poor performance and pollutes the output with geometry 
-
-  scene.clear();
-  scene.add(mesh);
-
-  //this flag needs to be set to be able to update geometry after first render
-  mesh.geometry.attributes.position.needsUpdate = true;
-
-  let increment = 0.000005;
-  mesh.rotation.x += increment;
-  mesh.rotation.y += increment;
-  mesh.rotation.z += increment;
-
-  renderer.render(scene,camera);
+  requestAnimationFrame(animate);
+  render();
+  //mesh.geometry.attributes.position.needsUpdate = true;
+  //dirLight.angle = options.angle;
+  //dirLight.angle = options.angle;
+  //dirLight.intensity = options.intensity;
+  let increment = 0.001;
+  //scene.rotation.x += increment;
+  scene.rotation.y += increment;
+  //mesh.rotation.z += increment;
   controls.update();
 
-  requestAnimationFrame(animate);
 }
 
-//final update loop
-var MyUpdateLoop = function ( )
+function render() 
 {
-//call the render with the scene and the camera
-renderer.render(scene,camera);
-controls.update();
+    //controls.update(clock.getDelta());
+    //scene.clear();
+    renderer.render(scene,camera);
+}
 
-//finally perform a recoursive call to update again
-//this must be called because the mouse change the camera position
-requestAnimationFrame(MyUpdateLoop);
-};
-
-requestAnimationFrame(MyUpdateLoop);
-
-//this fucntion is called when the window is resized
-var MyResize = function ()
-{
-var width = window.innerWidth;
-var height = window.innerHeight;
-renderer.setSize(width,height);
-camera.aspect = width/height;
-camera.updateProjectionMatrix();
-renderer.render(scene,camera);
-};
-
-//link the resize of the window to the update of the camera
-window.addEventListener('resize', MyResize);
