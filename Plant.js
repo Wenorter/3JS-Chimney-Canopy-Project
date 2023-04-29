@@ -116,6 +116,11 @@ function initLights(){
 }
 
 // --- Sounds ---
+//start button 
+var stratButton = document.getElementById('startButton');
+stratButton.addEventListener('click', PlayAudio);
+
+function PlayAudio(){
 const listener = new THREE.AudioListener();
 //laod audio file 
 camera.add( listener );
@@ -127,6 +132,7 @@ audioLoader.load('./sounds/sandyBeach.mp3', function(buffer){
   sound.setVolume( 0.5 );
   sound.play();
 });
+}
 
 //Base Ground Model
 function loadBaseGroundModel(){
