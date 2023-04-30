@@ -55,6 +55,8 @@ initLights();
 //loadTestSphere();
 loadSkybox();
 loadBaseGroundModel();
+//rules();
+//drawLine();
 renderGui();
 animate();
 //========================
@@ -101,9 +103,7 @@ sphere.position.set(-4,14,-1);
 scene.add(sphere);
 }
 
-//adding basic fod effect
-//Note: we don't need fog, consider removing it
-//scene.fog = new THREE.Fog(0xFFFFFF, 0, 200);
+
 
 //Lighting
 function initLights(){
@@ -136,13 +136,30 @@ function loadBaseGroundModel(){
     });
 }
 
+//rules for the algorithm
+function rules()  {
+  this.axiom = 'F';
+  this.mainRule = 'FF-[-F+F+F]+[+F+F+F+F+F+F]';
+  this.Rule2 = '';
+}
+//draw a line
+function drawLine(x,y, x0,y0, color, width) {
+  ctx.beginPath();
+  ctx.moveTo(x,y);
+  ctx.lineTo(x0,y0);
+  ctx.strokeStyle = color;
+  if (params.constantWidth) ctx.lineWidth = 1; else
+  ctx.lineWidth = width;
+  ctx.stroke();
+}
+
 //Dat GUI
 function renderGui()
 {
   const gui = new GUI();
 
   //parameters for GUI
-  //Test shere
+  //Test sphere
   let options = {
     sphereColor: '#ffea00',
     angle: 0.2,
