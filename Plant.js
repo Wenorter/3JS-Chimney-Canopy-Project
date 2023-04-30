@@ -55,8 +55,9 @@ initLights();
 //loadTestSphere();
 loadSkybox();
 loadBaseGroundModel();
-//rules();
+rules();
 //drawLine();
+//addTree();
 renderGui();
 animate();
 //========================
@@ -136,11 +137,35 @@ function loadBaseGroundModel(){
     });
 }
 
+
+var axiom = "A";
+var sentence = axiom;
+var mainRule;
+
+
 //rules for the algorithm
 function rules()  {
-  this.axiom = 'F';
-  this.mainRule = 'FF-[-F+F+F]+[+F+F+F+F+F+F]';
-  this.Rule2 = '';
+ // this.axiom = 'F';
+  //this.mainRule = 'FF-[-F+F+F]+[+F+F+F+F+F+F]';
+ // this.Rule2 = '';
+ var rule1 = {
+  a: "A", b: "AB"
+ }
+
+ var rule2 = {
+  a: "B", b: "A"
+ }
+
+ /*function generate()
+ {
+    for (int i= 0; i < sentence.length; i++)
+    {
+      var current = sentence.chartAt(i);
+
+    }
+    
+ }*/
+
 }
 //draw a line
 function drawLine(x,y, x0,y0, color, width) {
@@ -152,6 +177,13 @@ function drawLine(x,y, x0,y0, color, width) {
   ctx.lineWidth = width;
   ctx.stroke();
 }
+
+function addTree(x, y) {
+  var material = new THREE.LineBasicMaterial({ color: 0xaaa });
+  var line_geometry = new THREE.Geometry();
+  line_geometry = DrawTheTree(line_geometry, x, y, 0);
+}
+
 
 //Dat GUI
 function renderGui()
