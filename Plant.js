@@ -58,6 +58,7 @@ loadBaseGroundModel();
 rules();
 //drawLine();
 //addTree();
+//branchInsert();
 renderGui();
 animate();
 //========================
@@ -135,6 +136,59 @@ function loadBaseGroundModel(){
       dirLight.target = chimneyCanopyBase;
       scene.add(chimneyCanopyBase);
     });
+}
+
+function branchInsert(totalGeometry, branchLength, branchRadius, topTargetPoint, theta, rho, phi) {
+
+  if (branchLength < 0 || branchRadius < 0)
+      return topTargetPoint;
+
+  var branch = new THREE.CylinderGeometry(branchRadius * (1 - radiusReductionFactor), branchRadius, branchLength, 9);
+
+ 
+  var newTopPoint = new THREE.Vector3(0, branchLength / 2, 0);
+  var bottomPoint = new THREE.Vector3(0, - branchLength / 2, 0);
+
+  var branchMesh = new THREE.Mesh(branch);
+
+  branchMesh.autoUpdate = false;
+
+ 
+  branchMesh.rotateX(toRadians(theta));
+  branchMesh.rotateY(toRadians(rho));
+  branchMesh.rotateZ(toRadians(phi));
+
+  branchMesh.updateMatrix();
+
+  
+  newTopPoint.applyEuler(branchMesh.rotation);
+  bottomPoint.applyEuler(branchMesh.rotation);
+
+
+  newTopPoint.x = newTopPoint.x + topTargetPoint.x - bottomPoint.x;
+  newTopPoint.y = newTopPoint.y + topTargetPoint.y - bottomPoint.y;
+  newTopPoint.z = newTopPoint.z + topTargetPoint.z - bottomPoint.z;
+
+  branchMesh.position.set(topTargetPoint.x - bottomPoint.x, topTargetPoint.y - bottomPoint.y, topTargetPoint.z - bottomPoint.z);
+  branchMesh.updateMatrix();
+
+  if ((branchRadius / initialBranchRadius) < 0.6) {
+      let position = [newTopPoint.x, newTopPoint.y, newTopPoint.z, theta + angle, rho + angle, phi + angle];
+      leafsPositions.push(position);
+      position = [newTopPoint.x, newTopPoint.y, newTopPoint.z, theta - angle, rho - angle, phi - angle];
+      leafsPositions.push(position);
+  }
+
+  branchMesh.castShadow = true;
+  branchMesh.receiveShadow = true;
+
+  totalGeometry.merge(branchMesh.geometry, branchMesh.matrix);
+
+  totalGeometry.castShadow = true;
+  totalGeometry.receiveShadow = true;
+
+  return newTopPoint;
+
 }
 
 
