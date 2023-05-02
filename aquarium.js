@@ -19,8 +19,8 @@ const color = new THREE.Color();
  *  scene 
  **/
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xffffff);
-scene.fog = new THREE.Fog(0xffffff, 0, 750);
+//scene.background = new THREE.Color(0xffffff);
+//scene.fog = new THREE.Fog(0xffffff, 0, 750);
 
 /**
  *  camera 
@@ -39,13 +39,23 @@ camera.position.set(0, 1, 2);
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
+renderer.shadowMap.enable = true;
 
 /**
  *  Light 
  **/
+/*
 const light = new THREE.HemisphereLight(0xeeeeff, 0x777788, 0.75);
 light.position.set(0.5, 1, 0.75);
 scene.add(light);
+*/
+const pointLight = new THREE.PointLight(0xffffff, 1);
+pointLight.position.set(5, 15, -5);
+pointLight.castShadow = true;
+scene.add(pointLight);
+
+const pointLightHelper = new THREE.PointLightHelper(pointLight, 3);
+scene.add(pointLightHelper);
 
 //FPS point of view setting 
 const controls = new PointerLockControls(camera, renderer.domElement);
@@ -54,45 +64,28 @@ window.addEventListener("click", ()=> {
 });
 
 /**
- * create random object
+ * create graund 
  **/
-const planeGeometry = new THREE.PlaneGeometry(400, 400, 100, 100);
-const material = new THREE.MeshBasicMaterial({
-  color: "orange",
-  wireframe: true,
-});
+const material = new THREE.MeshStandardMaterial({
+  color: "gray",
+})
+
+//plane
+const planeGeometry = new THREE.PlaneGeometry(70, 70);
+//mesh-plane
 const plane = new THREE.Mesh(planeGeometry, material);
-plane.rotateX(-Math.PI / 2);
+plane.rotation.x = -Math.PI * 0.5;
+plane.receiveShadow = true;
 scene.add(plane);
 
-const boxGeometry = new THREE.BoxGeometry(20, 20, 20);
-let position = boxGeometry.attributes.position;
-const colorsBox = [];
-for (let i = 0, l = position.count; i < l; i++) {
-  color.setHSL(Math.random() * 0.3 + 0.5, 0.75, Math.random() * 0.25 + 0.75);
-  colorsBox.push(color.r, color.g, color.b);
-}
-boxGeometry.setAttribute(
-  "color",
-  new THREE.Float32BufferAttribute(colorsBox, 3)
-);
-for (let i = 0; i < 200; i++) {
-  const boxMaterial = new THREE.MeshPhongMaterial({
-    specular: 0xffffff,
-    flatShading: true,
-    vertexColors: true,
-  });
-  boxMaterial.color.setHSL(
-    Math.random() * 0.2 + 0.5,
-    0.75,
-    Math.random() * 0.25 + 0.75
-  );
-  const box = new THREE.Mesh(boxGeometry, boxMaterial);
-  box.position.x = Math.floor(Math.random() * 20 - 10) * 20;
-  box.position.y = Math.floor(Math.random() * 20) * 20 + 10;
-  box.position.z = Math.floor(Math.random() * 20 - 10) * 20;
-  scene.add(box);
-}
+//test box
+const boxGeometry = new THREE.BoxGeometry(7, 7, 7);
+//mesh-box
+const box = new THREE.Mesh(boxGeometry, material);
+box.position.y = 3.5;
+box.castShadow = true;
+scene.add(box);
+
 
 // -- Keyboard controls --
 const onKeyDown = (e) => {
