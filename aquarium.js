@@ -179,6 +179,7 @@ let prevTime = performance.now();
 function animate() {
   requestAnimationFrame(animate);
 
+  //raycaster.setFromCamera(clickMouse, camera);
   const time = performance.now();
 
   // forward and backward decisions
