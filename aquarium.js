@@ -34,12 +34,45 @@ const camera = new THREE.PerspectiveCamera(
 camera.position.set(0, 1, 2);
 
 /**
+ * raycaster 
+ */
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+
+function onPointerMove( event ){
+    pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+    pointer.y = -( event.clientY / window.innerHeight ) * 2 + 1;
+}
+
+/**
  *  renderer 
  **/
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 renderer.shadowMap.enable = true;
+
+function render() {
+
+	// update the picking ray with the camera and pointer position
+	raycaster.setFromCamera( pointer, camera );
+
+	// calculate objects intersecting the picking ray
+	const intersects = raycaster.intersectObjects( scene.children );
+
+	for ( let i = 0; i < intersects.length; i ++ ) {
+
+		intersects[ i ].object.material.color.set( 0xff0000 );
+
+	}
+
+	renderer.render( scene, camera );
+
+}
+
+window.addEventListener( 'pointermove', onPointerMove );
+
+window.requestAnimationFrame(render);
 
 /**
  *  Light 
@@ -82,7 +115,8 @@ scene.add(plane);
 const boxGeometry = new THREE.BoxGeometry(7, 7, 7);
 //mesh-box
 const box = new THREE.Mesh(boxGeometry, material);
-box.position.y = 3.5;
+box.position.y = 5; //3.5
+box.position.z = -10;
 box.castShadow = true;
 scene.add(box);
 
