@@ -3,13 +3,13 @@
 import * as THREE from "three";
 import { PointerLockControls } from "./build/PointerLockControls.js";
 
-//前進か後進か変数宣言 Forward or backward variable declaration
+//Forward or backward variable declaration
 let moveForward = false;
 let moveBackword = false;
 let moveLeft = false;
 let moveRight = false;
 
-//移動速度と移動方向の定義 Definition of movement speed and direction of movement
+//Definition of movement speed and direction of movement
 const velocity = new THREE.Vector3(); //=0,0,0
 const direction = new THREE.Vector3();
 
@@ -133,11 +133,11 @@ function animate() {
 
   const time = performance.now();
 
-  // 前進後進判定 forward and backward decisions
+  // forward and backward decisions
   direction.z = Number(moveForward) - Number(moveBackword); //cast two variable to 1 to 0
   direction.x = Number(moveRight) - Number(moveLeft);
 
-  //ポインターがONになったら When the pointer turns ON
+  // When the pointer turns ON
   if(controls.isLocked){
     const delta = (time - prevTime) / 1000;
 
