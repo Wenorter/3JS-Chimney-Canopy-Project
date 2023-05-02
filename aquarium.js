@@ -37,12 +37,17 @@ camera.position.set(0, 1, 2);
  * raycaster 
  */
 const raycaster = new THREE.Raycaster();
-const pointer = new THREE.Vector2();
+//const pointer = new THREE.Vector2();
 
+/*
 function onPointerMove( event ){
-    pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-    pointer.y = -( event.clientY / window.innerHeight ) * 2 + 1;
+    //console.log("clicked");
+    pointer.x = ( camera.position.x / window.innerWidth ) * 2 - 1; //event.clientX
+    pointer.y = -( camera.position.y / window.innerHeight ) * 2 + 1;
+    console.log(pointer.x)
+    console.log(pointer.y);
 }
+*/
 
 /**
  *  renderer 
@@ -55,8 +60,8 @@ renderer.shadowMap.enable = true;
 function render() {
 
 	// update the picking ray with the camera and pointer position
-	raycaster.setFromCamera( pointer, camera );
-
+	raycaster.set( camera.getWorldPosition(new THREE.Vector3()), camera.getWorldDirection(new THREE.Vector3()));
+    
 	// calculate objects intersecting the picking ray
 	const intersects = raycaster.intersectObjects( scene.children );
 
@@ -70,7 +75,7 @@ function render() {
 
 }
 
-window.addEventListener( 'pointermove', onPointerMove );
+//window.addEventListener( 'mousedown', onPointerMove, false);
 
 window.requestAnimationFrame(render);
 
@@ -115,11 +120,20 @@ scene.add(plane);
 const boxGeometry = new THREE.BoxGeometry(7, 7, 7);
 //mesh-box
 const box = new THREE.Mesh(boxGeometry, material);
-box.position.y = 5; //3.5
+box.position.y = 3.5; //3.5
 box.position.z = -10;
 box.castShadow = true;
 scene.add(box);
 
+//test box
+const boxGeometry2 = new THREE.BoxGeometry(7, 7, 7);
+//mesh-box
+const box2 = new THREE.Mesh(boxGeometry2, material);
+box2.position.x = 10;
+box2.position.y = 5; //3.5
+box2.position.z = -10;
+box2.castShadow = true;
+scene.add(box2);
 
 // -- Keyboard controls --
 const onKeyDown = (e) => {
