@@ -3,6 +3,8 @@ import * as THREE from 'three';
 import {GUI} from './build/dat.gui.module.js';
 import {OrbitControls} from './build/OrbitControls.js';
 import {FBXLoader} from './build/FBXLoader.js';
+import {EffectComposer} from './build/EffectComposer.js';
+import {RenderPass} from './build/RenderPass.js';
 import {NURBSCurve} from './build/NURBSCurve.js';
 
 //==================================
@@ -20,10 +22,6 @@ var plantFirstColour, plantSecondColour, plantThirdColour;
 var backgroundColour;
 
 let plane;
-
-
-//const image = new Image();
-//image.src = ;
 
 //create the scene
 scene = new THREE.Scene();
@@ -47,6 +45,11 @@ renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth,window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
+//Effect Composer
+const composer = new EffectComposer(renderer);
+const renderPass = new RenderPass(scene, camera);
+composer.addPass(renderPass);
+
 //Controls
 var controls = new OrbitControls(camera, renderer.domElement );
 
@@ -57,17 +60,17 @@ loadSkybox();
 loadBaseGroundModel();
 loadLizard();
 renderGui();
-//animate(); //animate() is placed at the bottom of code for get grass shader working 
+//animate(); //is placed at the bottom of code for get grass shader working 
 //========================
 
 //Handle window resize
 function onWindowResize() 
 {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
 
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    controls.handleResize();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  controls.handleResize();
 }
 
 window.addEventListener('resize', onWindowResize);
@@ -84,11 +87,6 @@ function initLights(){
 
 function loadSkybox(){
   //adding textures 
-  //const texture = new THREE.TextureLoader().load(
-  //'../Images/Background3JS.jpeg');
-
-  //background texture 
-  //scene.background = texture;
   const cubeTextureLoader = new THREE.CubeTextureLoader();
   scene.background = cubeTextureLoader.load([
     './images/rwcc/right.png',
@@ -124,10 +122,6 @@ sphere.position.set(-4,14,-1);
 scene.add(sphere);
 }
 
-//adding basic fod effect
-//Note: we don't need fog, consider removing it
-//scene.fog = new THREE.Fog(0xFFFFFF, 0, 200);
-
 //Lizard decoration
 function loadLizard(){
   const fbxLoader = new FBXLoader();
@@ -152,9 +146,8 @@ function loadLizard(){
 }
 
 // --- Sounds ---
-//start button 
-var stratButton = document.getElementById('startButton');
-stratButton.addEventListener('click', PlayAudio);
+//start when clicked once
+window.addEventListener('click', () => {PlayAudio()}, {once: true});
 
 function PlayAudio(){
 const listener = new THREE.AudioListener();
@@ -162,13 +155,12 @@ const listener = new THREE.AudioListener();
 camera.add( listener );
 const sound = new THREE.Audio(listener);
 const audioLoader = new THREE.AudioLoader();
-audioLoader.load('./sounds/sandyBeach.mp3', function(buffer){
+audioLoader.load('./music/progfox-overcast.mp3', function(buffer){
   sound.setBuffer( buffer );
   sound.setLoop( true );
   sound.setVolume( 0.5 );
   sound.play();
 });
-stratButton.remove();//once user click it, delete button. 
 }
 
 //Base Ground Model
@@ -193,6 +185,96 @@ function loadBaseGroundModel(){
       scene.add(chimneyCanopyBase);
     });
 }
+
+  const WIDTH = window.innerWidth;
+  const HEIGHT = window.innerHeight;
+  //skip camera, scene, renderer
+  //we already have control 
+  const clock = new THREE.Clock();
+
+  const vertexShader = `
+    varying vec2 vUv;
+    uniform float time;
+    
+    void main() {
+
+      vUv = uv;
+      
+      // VERTEX POSITION
+      
+      vec4 mvPosition = vec4(position, 1.0);
+      #ifdef USE_INSTANCING
+        mvPosition = instanceMatrix * mvPosition;
+      #endif
+      
+      // DISPLACEMENT
+      
+      // here the displacement is made stronger on the blades tips.
+      float dispPower = 1.0 - cos( uv.y * 3.1416 / 2.0 );
+      
+      float displacement = sin( mvPosition.z + time * 10.0 ) * ( 0.1 * dispPower );
+      mvPosition.z += displacement;
+      
+      //
+      
+      vec4 modelViewPosition = modelViewMatrix * mvPosition;
+      gl_Position = projectionMatrix * modelViewPosition;
+
+    }
+  `;
+
+  const fragmentShader = `
+    varying vec2 vUv;
+    
+    void main() {
+      vec3 baseColor = vec3(1, 0.2, 0.7); // was 0.41, 1.0, 0.5 
+      float clarity = (vUv.y * 0.5 ) + 0.5;
+      gl_FragColor = vec4(baseColor * clarity, 1 );
+    }
+  `;
+
+  const uniforms = {
+    time: {
+      value: 0
+    }
+  }
+
+  const leavesMaterial = new THREE.ShaderMaterial({
+    vertexShader,
+    fragmentShader,
+    uniforms,
+    side: THREE.DoubleSide
+  });
+
+  /////////
+  // MESH
+  /////////
+
+  const instanceNumber = 500; //was 5000
+  const dummy = new THREE.Object3D();
+
+  const geometry = new THREE.PlaneGeometry(0.1, 1, 1, 4);// was 0.1, 1, 1, 4
+  geometry.translate(0, 3, 0); // move grass blade geometry lowest point at 0. // original position is 0, 0.5, 0
+
+  const instancedMesh = new THREE.InstancedMesh(geometry, leavesMaterial, instanceNumber);
+
+  scene.add(instancedMesh);
+
+  // Position and scale the grass blade instances randomly.
+
+  for (let i = 0 ; i < instanceNumber; i++) {
+
+    dummy.position.set(
+      ( Math.random() - 0.5 ) * 40, //original rane is ( Math.random() - 0.5 ) * 10, 0, ( Math.random() - 0.5 ) * 10
+      0,
+      ( Math.random() - 0.5 ) * 40
+    ); 
+
+    dummy.scale.setScalar(0.5 + Math.random() * 0.5);
+    dummy.rotation.y = Math.random() * Math.PI;
+    dummy.updateMatrix();
+    instancedMesh.setMatrixAt(i, dummy.matrix);
+    }
 
 //Dat GUI
 function renderGui()
@@ -265,102 +347,6 @@ function renderGui()
   lightFolder.add(options, 'intensity', 0, 1)
 }
 
-/**
- *  Grass shader
- */
-const WIDTH = window.innerWidth;
-const HEIGHT = window.innerHeight;
-//skip camera, scene, renderer
-//we already have control 
-const clock = new THREE.Clock();
-
-const vertexShader = `
-  varying vec2 vUv;
-  uniform float time;
-  
-	void main() {
-
-    vUv = uv;
-    
-    // VERTEX POSITION
-    
-    vec4 mvPosition = vec4( position, 1.0 );
-    #ifdef USE_INSTANCING
-    	mvPosition = instanceMatrix * mvPosition;
-    #endif
-    
-    // DISPLACEMENT
-    
-    // here the displacement is made stronger on the blades tips.
-    float dispPower = 1.0 - cos( uv.y * 3.1416 / 2.0 );
-    
-    float displacement = sin( mvPosition.z + time * 10.0 ) * ( 0.1 * dispPower );
-    mvPosition.z += displacement;
-    
-    //
-    
-    vec4 modelViewPosition = modelViewMatrix * mvPosition;
-    gl_Position = projectionMatrix * modelViewPosition;
-
-	}
-`;
-
-const fragmentShader = `
-  varying vec2 vUv;
-  
-  void main() {
-  	vec3 baseColor = vec3( 1, 0.5, 0.4 ); // was 0.41, 1.0, 0.5 
-    float clarity = ( vUv.y * 0.5 ) + 0.5;
-    gl_FragColor = vec4( baseColor * clarity, 1 );
-  }
-`;
-
-const uniforms = {
-	time: {
-  	value: 0
-  }
-}
-
-const leavesMaterial = new THREE.ShaderMaterial({
-	vertexShader,
-  fragmentShader,
-  uniforms,
-  side: THREE.DoubleSide
-});
-
-/////////
-// MESH
-/////////
-
-const instanceNumber = 9000; //was 5000
-const dummy = new THREE.Object3D();
-
-const geometry = new THREE.PlaneGeometry( 0.1, 1, 1, 4 );// was 0.1, 1, 1, 4
-geometry.translate( 0, 3, 0 ); // move grass blade geometry lowest point at 0. // original position is 0, 0.5, 0
-
-const instancedMesh = new THREE.InstancedMesh( geometry, leavesMaterial, instanceNumber );
-
-scene.add( instancedMesh );
-
-// Position and scale the grass blade instances randomly.
-
-for ( let i=0 ; i<instanceNumber ; i++ ) {
-
-	dummy.position.set(
-  	( Math.random() - 0.5 ) * 40, //original rane is ( Math.random() - 0.5 ) * 10, 0, ( Math.random() - 0.5 ) * 10
-    0,
-    ( Math.random() - 0.5 ) * 40
-  );
-  
-  dummy.scale.setScalar( 0.5 + Math.random() * 0.5 );
-  
-  dummy.rotation.y = Math.random() * Math.PI;
-  
-  dummy.updateMatrix();
-  instancedMesh.setMatrixAt( i, dummy.matrix );
-  }
-
-
 function animate(){
   requestAnimationFrame(animate);
   render();
@@ -370,24 +356,17 @@ function animate(){
 	leavesMaterial.uniforms.time.value = clock.getElapsedTime();
   leavesMaterial.uniformsNeedUpdate = true;
 
-  //mesh.geometry.attributes.position.needsUpdate = true;
-  //dirLight.angle = options.angle;
-  //dirLight.angle = options.angle;
-  //dirLight.intensity = options.intensity;
   let increment = 0.001;
-  //scene.rotation.x += increment;
   scene.rotation.y += increment;
-  //mesh.rotation.z += increment;
   controls.update();
 
 }
 
 animate();
+
 function render() 
 {
-    //controls.update(clock.getDelta());
-    //scene.clear();
-    renderer.render(scene,camera);
+    composer.render(scene,camera);
 }
 
 
