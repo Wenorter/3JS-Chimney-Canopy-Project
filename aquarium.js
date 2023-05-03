@@ -9,6 +9,9 @@ let moveBackword = false;
 let moveLeft = false;
 let moveRight = false;
 
+
+var down = false;
+
 //Definition of movement speed and direction of movement
 const velocity = new THREE.Vector3(); //=0,0,0
 const direction = new THREE.Vector3();
@@ -33,11 +36,20 @@ const camera = new THREE.PerspectiveCamera(
 );
 camera.position.set(0, 1, 2);
 
+//background texture
+const texture = new THREE.TextureLoader().load(
+  '../Image/Skybox2-deseart/desertdawn_bk.jpg');
+
+  const texture1 = new THREE.TextureLoader().load(
+    '../Image/Skybox1/Skybox1Right.png');
+
+  scene.background = texture;
+
 /**
  * raycaster 
  */
 const raycaster = new THREE.Raycaster();
-//const pointer = new THREE.Vector2();
+const pointer = new THREE.Vector2();
 
 /*
 function onPointerMove( event ){
@@ -48,7 +60,13 @@ function onPointerMove( event ){
     console.log(pointer.y);
 }
 */
-
+function onPointerMove( event ){
+    //console.log("clicked");
+    pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1; //event.clientX
+    pointer.y = -( event.clientY / window.innerHeight ) * 2 + 1;
+    console.log(pointer.x)
+    console.log(pointer.y);
+}
 /**
  *  renderer 
  **/
@@ -60,23 +78,27 @@ renderer.shadowMap.enable = true;
 function render() {
 
 	// update the picking ray with the camera and pointer position
-	raycaster.set( camera.getWorldPosition(new THREE.Vector3()), camera.getWorldDirection(new THREE.Vector3()));
-    
+	//raycaster.set( camera.getWorldPosition(new THREE.Vector3()), camera.getWorldDirection(new THREE.Vector3()));
+   //raycaster.setFromCamera(pointer, camera);
 	// calculate objects intersecting the picking ray
+   // const arrow = new THREE.ArrowHelper(camera.getWorldDirection(new THREE.Vector3()), camera.getWorldPosition(new THREE.Vector3()), 3, 0x000000 );
 	const intersects = raycaster.intersectObjects( scene.children );
 
-	for ( let i = 0; i < intersects.length; i ++ ) {
+/*for ( let i = 0; i < intersects.length; i++ ) {
 
-		intersects[ i ].object.material.color.set( 0xff0000 );
+	//	intersects[i].object.material.color.set( 0xff0000 );
 
-	}
+	}*/
+    if (intersects.length> 0){
+        intersects[0].object.material.color.set(0xff0000);
+    }
 
-	renderer.render( scene, camera );
+	
 
 }
 
-//window.addEventListener( 'mousedown', onPointerMove, false);
-
+window.addEventListener( 'mousemove', onPointerMove, false);
+//window.addEventListener( 'mousemove', onPointerMove);
 window.requestAnimationFrame(render);
 
 /**
@@ -96,16 +118,49 @@ const pointLightHelper = new THREE.PointLightHelper(pointLight, 3);
 scene.add(pointLightHelper);
 
 //FPS point of view setting 
-const controls = new PointerLockControls(camera, renderer.domElement);
+const controls = new PointerLockControls(camera, document.body);//renderer.domElement);
 window.addEventListener("click", ()=> {
     controls.lock();
 });
+/*const blocker = document.getElementById( 'blocker' );
+const instructions = document.getElementById( 'instructions' );
+instructions.addEventListener( 'click', function () {
 
+    controls.lock();
+
+} );
+controls.addEventListener( 'lock', function () {
+
+    instructions.style.display = 'none';
+    blocker.style.display = 'none';
+
+} );
+controls.addEventListener( 'unlock', function () {
+
+    blocker.style.display = 'block';
+    instructions.style.display = '';
+
+} );
+scene.add( controls.getObject() );*/
+/*if ('mousedown')
+{
+window.addEventListener("click", function() {
+    controls.lock();
+    
+});
+}
+else{
+window.addEventListener("unclick", function() {
+    controls.unlock();
+    
+});
+}*/
 /**
- * create graund 
+ * create ground 
  **/
 const material = new THREE.MeshStandardMaterial({
   color: "gray",
+  map: texture1
 })
 
 //plane
@@ -134,6 +189,12 @@ box2.position.y = 5; //3.5
 box2.position.z = -10;
 box2.castShadow = true;
 scene.add(box2);
+
+/*const dotGeometry = new THREE.BufferGeometry();
+dotGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array([0,0,0]), 3));
+const dotMaterial = new THREE.PointsMaterial({ size: 0.1, color: 0xff0000 });
+const dot = new THREE.Points(dotGeometry, dotMaterial);
+scene.add(dot);*/
 
 // -- Keyboard controls --
 const onKeyDown = (e) => {
@@ -178,8 +239,9 @@ let prevTime = performance.now();
 
 function animate() {
   requestAnimationFrame(animate);
-
+   render();
   //raycaster.setFromCamera(clickMouse, camera);
+  
   const time = performance.now();
 
   // forward and backward decisions
@@ -203,11 +265,33 @@ function animate() {
 
     controls.moveForward(-velocity.z * delta);
     controls.moveRight(-velocity.x * delta);
+  } 
+  /*
+  if ( controls.isLocked == true ) {
+
+    raycaster.ray.origin.copy( controls.getObject().position );
+    raycaster.ray.origin.y -= 10;
+
+    const intersections = raycaster.intersectObjects( objects );
+
+    const onObject = intersections.length > 0;
+
+    const delta = ( time - prevTime ) / 1000;
+
+    velocity.x -= velocity.x * 10.0 * delta;
+    velocity.z -= velocity.z * 10.0 * delta;
+
+    velocity.y -= 9.8 * 100.0 * delta; // 100.0 = mass
+
+    direction.z = Number( moveForward ) - Number( moveBackward );
+    direction.x = Number( moveRight ) - Number( moveLeft );
+    direction.normalize();
   }
-
+  */
   prevTime = time;
-
   renderer.render(scene, camera);
+  window.addEventListener( 'mousemove', onPointerMove);
+  
 }
 
 animate();
