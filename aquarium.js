@@ -2,6 +2,7 @@
 
 import * as THREE from "three";
 import { PointerLockControls } from "./build/PointerLockControls.js";
+import { OrbitControls } from './build/OrbitControls.js'
 
 //Forward or backward variable declaration
 let moveForward = false;
@@ -49,24 +50,40 @@ const texture = new THREE.TextureLoader().load(
  * raycaster 
  */
 const raycaster = new THREE.Raycaster();
-const pointer = new THREE.Vector2();
 
-/*
+
+
 function onPointerMove( event ){
-    //console.log("clicked");
+    console.log("clicked");
+    const pointer = new THREE.Vector2();
     pointer.x = ( camera.position.x / window.innerWidth ) * 2 - 1; //event.clientX
     pointer.y = -( camera.position.y / window.innerHeight ) * 2 + 1;
     console.log(pointer.x)
     console.log(pointer.y);
+
+    raycaster.setFromCamera(pointer, camera);
+    const intersects = raycaster.intersectObjects( scene.children, false );
+   
+    if (intersects.length> 0){
+       intersects[0].object.material.color.set(0xff0000);
+       console.log("hit");
+    }
+    else {
+        console.log(" not hit");
+    }
+    
 }
-*/
-function onPointerMove( event ){
+window.addEventListener( 'mousedown', onPointerMove, false);
+
+/*function onPointerMove( event ){
     //console.log("clicked");
-    pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1; //event.clientX
-    pointer.y = -( event.clientY / window.innerHeight ) * 2 + 1;
+    const pointer = new THREE.Vector2();
+    pointer.x = ( event.clientX / renderer.domElement.clientWidth ) * 2 - 1; //event.clientX
+    pointer.y = -( event.clientY / renderer.domElement.clientHeight ) * 2 + 1;
     console.log(pointer.x)
     console.log(pointer.y);
-}
+} */
+
 /**
  *  renderer 
  **/
@@ -75,31 +92,40 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 renderer.shadowMap.enable = true;
 
-function render() {
+var arrow;
+
+/*function render() {
 
 	// update the picking ray with the camera and pointer position
-	//raycaster.set( camera.getWorldPosition(new THREE.Vector3()), camera.getWorldDirection(new THREE.Vector3()));
+	raycaster.set( camera.getWorldPosition(new THREE.Vector3()), camera.getWorldDirection(new THREE.Vector3()));
+ arrow = new THREE.ArrowHelper(camera.getWorldDirection(new THREE.Vector3()), camera.getWorldPosition(new THREE.Vector3()), 0.1, 0x000000 );
    //raycaster.setFromCamera(pointer, camera);
 	// calculate objects intersecting the picking ray
-   // const arrow = new THREE.ArrowHelper(camera.getWorldDirection(new THREE.Vector3()), camera.getWorldPosition(new THREE.Vector3()), 3, 0x000000 );
+    //arrow = new THREE.ArrowHelper(camera.getWorldDirection(new THREE.Vector3()), camera.getWorldPosition(new THREE.Vector3()), 3, 0x000000 );
 	const intersects = raycaster.intersectObjects( scene.children );
 
-/*for ( let i = 0; i < intersects.length; i++ ) {
 
-	//	intersects[i].object.material.color.set( 0xff0000 );
-
-	}*/
     if (intersects.length> 0){
         intersects[0].object.material.color.set(0xff0000);
     }
 
-	
+	/*for ( let i = 0; i < intersects.length; i++ ) {
 
-}
+		intersects[i].object.material.color.set( 0xff0000 );
 
-window.addEventListener( 'mousemove', onPointerMove, false);
+	}*/
+
+//}
+
+//window.addEveantListener( 'mousemove', onPointerMove, false);
 //window.addEventListener( 'mousemove', onPointerMove);
-window.requestAnimationFrame(render);
+/*window.addEventListener( 'click', event =>{
+    click.x = ( camera.position.x / window.innerWidth ) * 2 - 1; //event.clientX
+    click.y = -( camera.position.y / window.innerHeight ) * 2 + 1;
+
+    
+});*/
+//window.requestAnimationFrame(render);
 
 /**
  *  Light 
@@ -158,36 +184,51 @@ window.addEventListener("unclick", function() {
 /**
  * create ground 
  **/
-const material = new THREE.MeshStandardMaterial({
+/*const material = new THREE.MeshStandardMaterial({
   color: "gray",
   map: texture1
-})
+})*/
 
 //plane
 const planeGeometry = new THREE.PlaneGeometry(70, 70);
 //mesh-plane
-const plane = new THREE.Mesh(planeGeometry, material);
+const planeMaterial = new THREE.MeshStandardMaterial({
+    color: "gray",
+    map: texture1
+  })
+const plane = new THREE.Mesh(planeGeometry, planeMaterial);
 plane.rotation.x = -Math.PI * 0.5;
 plane.receiveShadow = true;
+plane.name = "plane";
 scene.add(plane);
 
 //test box
 const boxGeometry = new THREE.BoxGeometry(7, 7, 7);
 //mesh-box
-const box = new THREE.Mesh(boxGeometry, material);
+const boxMaterial = new THREE.MeshStandardMaterial({
+    color: "orange"
+    
+  })
+const box = new THREE.Mesh(boxGeometry, boxMaterial);
 box.position.y = 3.5; //3.5
 box.position.z = -10;
 box.castShadow = true;
+box.name = "box";
 scene.add(box);
 
 //test box
 const boxGeometry2 = new THREE.BoxGeometry(7, 7, 7);
 //mesh-box
-const box2 = new THREE.Mesh(boxGeometry2, material);
+const boxMaterial2 = new THREE.MeshStandardMaterial({
+    color: "gray",
+    map: texture1
+  })
+const box2 = new THREE.Mesh(boxGeometry2, boxMaterial2);
 box2.position.x = 10;
 box2.position.y = 5; //3.5
 box2.position.z = -10;
 box2.castShadow = true;
+box2.name = "box2";
 scene.add(box2);
 
 /*const dotGeometry = new THREE.BufferGeometry();
@@ -239,7 +280,7 @@ let prevTime = performance.now();
 
 function animate() {
   requestAnimationFrame(animate);
-   render();
+   //render();
   //raycaster.setFromCamera(clickMouse, camera);
   
   const time = performance.now();
@@ -250,8 +291,13 @@ function animate() {
 
   // When the pointer turns ON
   if(controls.isLocked){
+    
     const delta = (time - prevTime) / 1000;
 
+    raycaster.setFromCamera( new THREE.Vector2(), camera );  
+    scene.remove ( arrow );
+    arrow = new THREE.ArrowHelper(raycaster.ray.direction, raycaster.ray.origin, 0.25, 0x000000 );
+    scene.add( arrow );
     //Decay 
     velocity.z -= velocity.z * 5.0 * delta;
     velocity.x -= velocity.x * 5.0 * delta;
@@ -262,6 +308,7 @@ function animate() {
     if(moveRight || moveLeft){
         velocity.x -= direction.x * 200 * delta; //change movement speed here
     }
+    
 
     controls.moveForward(-velocity.z * delta);
     controls.moveRight(-velocity.x * delta);
@@ -290,7 +337,8 @@ function animate() {
   */
   prevTime = time;
   renderer.render(scene, camera);
-  window.addEventListener( 'mousemove', onPointerMove);
+  //window.addEventListener( 'mousemove', onPointerMove);
+  
   
 }
 
