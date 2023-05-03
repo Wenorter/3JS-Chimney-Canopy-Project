@@ -210,7 +210,7 @@ const boxMaterial = new THREE.MeshStandardMaterial({
     
   })
 const box = new THREE.Mesh(boxGeometry, boxMaterial);
-box.position.y = 3.5; //3.5
+box.position.y = 6.5; //3.5
 box.position.z = -10;
 box.castShadow = true;
 box.name = "box";
