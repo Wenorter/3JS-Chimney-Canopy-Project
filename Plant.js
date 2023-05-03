@@ -242,6 +242,170 @@ function animate(){
 
 }
 
+/**
+ *  L system //still in progress
+ */
+function Params() {
+  this.iterations= 2;
+  this.theta= 18;
+  this.thetaRandomness= 0;
+  this.angle= 0;
+  this.scale= 4;
+  this.scaleRandomness= 0;
+  this.constantWidth= true;
+  this.deltarota =30;
+}
+
+function Rules()  {
+  this.axiom = 'F';
+  this.mainRule = 'FF-[-F+F+F]+[+F-F-F]';
+  this.Rule2 = '';
+}
+
+var rules = new Rules();
+var params = new Params();
+
+function drawLine(x,y, x0,y0, color, width) {
+  ctx.beginPath();
+  ctx.moveTo(x,y);
+  ctx.lineTo(x0,y0);
+  ctx.strokeStyle = color;
+  if (params.constantWidth) ctx.lineWidth = 1; else
+  ctx.lineWidth = width;
+  ctx.stroke();
+}
+
+function getRandomColor() {
+  var r = ~~( 255 * Math.random());
+ var g = ~~( 255 * Math.random());
+var b = ~~( 255 * Math.random() );
+  var a = colors.alpha;  
+ return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+}
+
+function GetAxiomTree() {
+  var Waxiom = rules.axiom;
+  var newf = rules.mainRule;
+  var newb = 'bb';
+  var newx = rules.Rule2;
+  var level = params.iterations;    
+  while (level > 0) {        
+      var m = Waxiom.length;
+      var T = '';        
+      for (var j=0; j < m; j++) {
+          var a = Waxiom[j];
+          if (a == 'F'){T += newf;}
+          else
+            if (a == 'b'){T += newb;}
+            else                   
+              if (a == 'X'){T += newx;}
+              else
+                 T += a;
+      }
+      Waxiom = T;
+      level--;
+  }
+  return Waxiom;
+}
+
+function DrawTheTree(geom, x_init, y_init, z_init){ 
+  var geometry = geom; //var geometry 
+    var Wrule = GetAxiomTree();
+    var n = Wrule.length;
+    var stackX = []; var stackY = [];  var stackZ = []; var stackA = [];
+    var stackV = []; var stackAxis = [];
+    
+    var theta = params.theta * Math.PI / 180; 
+    var scale = params.scale;
+    var angle = params.angle * Math.PI / 180;
+    
+    var x0 = x_init;    var y0 = y_init;   var z0 = z_init ;
+    var x;    var y;    var z;  
+    var rota = 0, rota2 = 0,
+        deltarota = 18 * Math.PI/180;  
+    var newbranch = false;
+  var axis_x = new THREE.Vector3( 1, 0, 0 );
+  var axis_y = new THREE.Vector3( 0, 1, 0 );
+  var axis_z = new THREE.Vector3( 0, 0, 1 );
+  var zero = new THREE.Vector3( 0, 0, 0 );
+  var axis_delta = new THREE.Vector3(),
+      prev_startpoint = new THREE.Vector3();
+  
+  var startpoint = new THREE.Vector3(x0,y0,z0), 
+      endpoint = new THREE.Vector3();
+  var bush_mark;
+  var vector_delta = new THREE.Vector3(scale, scale, 0);
+
+    for (var j=0; j<n; j++){        
+        var a = Wrule[j];
+        if (a == "+"){angle -= theta;                     
+                     }
+        if (a == "-"){angle += theta;                     
+                     }
+        if (a == "F"){
+          var a = vector_delta.clone().applyAxisAngle( axis_y, angle );          
+          endpoint.addVectors(startpoint, a);  
+         
+          geometry.vertices.push(startpoint.clone());
+          geometry.vertices.push(endpoint.clone());
+
+          prev_startpoint.copy(startpoint);
+          startpoint.copy(endpoint);
+          axis_delta = new THREE.Vector3().copy(a).normalize();
+          rota += deltarota;// + (5.0 - Math.random()*10.0);
+          
+        } 
+        if (a == "L"){
+          endpoint.copy(startpoint);
+          endpoint.add(new THREE.Vector3(0, scale*1.5, 0));
+          var vector_delta2 = new THREE.Vector3().subVectors(endpoint, startpoint);
+          vector_delta2.applyAxisAngle( axis_delta, rota2 );
+          endpoint.addVectors(startpoint, vector_delta2); 
+          
+          geometry.vertices.push(startpoint.clone());
+          geometry.vertices.push(endpoint.clone());          
+
+          rota2 += 45 * Math.PI/180;
+        }
+        if (a == "%"){}
+        if (a == "["){
+            stackV.push(new THREE.Vector3(startpoint.x, startpoint.y, startpoint.z));            
+            stackA[stackA.length] = angle;            
+        }
+        if (a == "]"){
+            var point = stackV.pop();
+            startpoint.copy(new THREE.Vector3(point.x, point.y, point.z));
+            angle = stackA.pop();
+        }        
+      bush_mark = a;
+    }
+  return geometry;
+}
+
+function setRules0(){
+  rules.axiom = "F";
+  rules.mainRule = "F-F[-F+F[LLLLLLLL]]++F[+F[LLLLLLLL]]--F[+F[LLLLLLLL]]";
+  params.iterations =3;
+  params.angle = 0;
+  params.theta = 30;
+  params.scale = 6;    
+}
+
+setRules0();
+  
+var material = new THREE.LineBasicMaterial({color: 0x333333});
+var line_geometry = new THREE.BufferGeometry(); //changed from geometry to buffer geo 
+line_geometry = DrawTheTree(line_geometry, 0, -150, 0);  
+//plant = new THREE.Mesh(line_geometry, material);
+plant = new THREE.Line(line_geometry, material, THREE.LinePieces);
+scene.add(plant);
+
+function addTree(x,y){
+  var material = new THREE.LineBasicMaterial({color: 0xaaa});
+  var line_geometry = new THREE.Geometry();
+  line_geometry = DrawTheTree(line_geometry, x, y, 0);
+}
+
 function render() 
 {
     //controls.update(clock.getDelta());
