@@ -196,6 +196,9 @@ var axiom = "A";
 var sentence = axiom;
 var mainRule;
 
+/**
+ *   L system plants 
+ */
 
 //rules for the algorithm
 function rules()  {
