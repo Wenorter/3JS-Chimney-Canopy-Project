@@ -40,6 +40,7 @@ loader.load('./BathroomHard_Pierre.hdr', function(texture){
         color: 0xFFFF00,
         transmission: 1,
         ior: 2.33,
+        thickness: 0.75
     });
     const sphereMesh = new THREE.Mesh(sphereGeo, sphereMat);
     scene.add(sphereMesh);
