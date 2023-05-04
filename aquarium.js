@@ -63,7 +63,9 @@ function onPointerMove( event ){
 
     raycaster.setFromCamera(pointer, camera);
     const intersects = raycaster.intersectObjects( scene.children, false );
-   
+   // const intersects1 = raycaster.intersectObjects( plane, false );
+  // raycaster.layers.set( 1 ); 
+//plane.layers.enable( 1 );
     if (intersects.length> 0){
        intersects[0].object.material.color.set(0xff0000);
        console.log("hit");
@@ -220,7 +222,7 @@ scene.add(box);
 const boxGeometry2 = new THREE.BoxGeometry(7, 7, 7);
 //mesh-box
 const boxMaterial2 = new THREE.MeshStandardMaterial({
-    color: "gray",
+    color: "white",
     map: texture1
   })
 const box2 = new THREE.Mesh(boxGeometry2, boxMaterial2);
