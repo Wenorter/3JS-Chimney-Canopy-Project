@@ -123,11 +123,15 @@ scene.add(sphere);
 }
 
 //Lizard decoration
+
+var lizardMaterial = new THREE.MeshPhongMaterial({
+  shininess: 0.1
+})
+
 function loadLizard(){
   const fbxLoader = new FBXLoader();
   fbxLoader.setResourcePath("./textures/pink_lizard/");
-  fbxLoader.load('./model/pink_lizard.fbx', function(lizard) {
-
+  fbxLoader.load('./model/pink_lizard2.fbx', function(lizard) {
     lizard.traverse(function(child){
       if (child.isMesh) 
       {
@@ -140,7 +144,7 @@ function loadLizard(){
   lizard.userData.name = "Pink Lizard";
   lizard.scale.setScalar(0.12);
   lizard.position.set(-10, 2.2, -10);
-  lizard.rotation.set(-190, 0, 90);
+  lizard.rotation.set(0, 0, 0);
   scene.add(lizard);
 });
 }
@@ -168,7 +172,7 @@ function loadBaseGroundModel(){
 
       const fbxLoader = new FBXLoader();
       fbxLoader.setResourcePath("./textures/base/");
-      fbxLoader.load('./model/chimney_canopy_base.fbx', function(chimneyCanopyBase) {
+      fbxLoader.load('./model/chimney_canopy_base2.fbx', function(chimneyCanopyBase) {
 
       chimneyCanopyBase.traverse(function(child){
           if (child.isMesh) 
