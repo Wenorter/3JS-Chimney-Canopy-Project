@@ -375,7 +375,7 @@ function loadLizard(){
   lizard.userData.name = "Pink Lizard";
   lizard.scale.setScalar(0.12);
   lizard.position.set(-10, 2.2, -10);
-  lizard.rotation.set(-190, 0, 90);
+  lizard.rotation.set(0, 0, 0);
   scene.add(lizard);
   });
 }
