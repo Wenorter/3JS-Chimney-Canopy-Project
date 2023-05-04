@@ -66,7 +66,7 @@ function onPointerMove( event ){
    // const intersects1 = raycaster.intersectObjects( plane, false );
   // raycaster.layers.set( 1 ); 
 //plane.layers.enable( 1 );
-    if (intersects.length> 0){
+    if (intersects.length > 0){
        intersects[0].object.material.color.set(0xff0000);
        console.log("hit");
     }
