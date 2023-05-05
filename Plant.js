@@ -75,6 +75,10 @@ composer.addPass(renderPass);
 
 //Controls
 //var controls = new OrbitControls(camera, renderer.domElement );
+const controls = new PointerLockControls(camera, document.body);//renderer.domElement);
+window.addEventListener("click", ()=> {
+  controls.lock();
+});
 
 //========DEBUG===========
 initLights();
@@ -85,12 +89,6 @@ lindenmayerPlant();
 loadBaseGroundModel();
 loadLizard();
 renderGui();
-//controlFPC();//added
-const controls = new PointerLockControls(camera, document.body);//renderer.domElement);
-window.addEventListener("click", ()=> {
-  controls.lock();
-});
-//controlFPC();
 animate(); 
 //is placed at the bottom of code for get grass shader working. 
 //Edit: I fixed it be declaring shader variables and splitting your code into initGrassShader() and initGrassPlane() at the top of the document;
@@ -505,9 +503,9 @@ function onPointerMove( event ){
 
     raycaster.setFromCamera(pointer, camera);
     const intersects = raycaster.intersectObjects( scene.children, false );
-   // const intersects1 = raycaster.intersectObjects( plane, false );
-  // raycaster.layers.set( 1 ); 
-//plane.layers.enable( 1 );
+    // const intersects1 = raycaster.intersectObjects( plane, false );
+    // raycaster.layers.set( 1 ); 
+    //plane.layers.enable( 1 );
     if (intersects.length > 0){
        intersects[0].object.material.color.set(0xff0000);
        console.log("hit");
@@ -603,7 +601,6 @@ function animate(){
         velocity.x -= direction.x * 200 * delta; //change movement speed here
     }
     
-
     controls.moveForward(-velocity.z * delta);
     controls.moveRight(-velocity.x * delta);
   } 
