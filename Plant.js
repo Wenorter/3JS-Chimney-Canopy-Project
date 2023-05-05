@@ -6,6 +6,7 @@ import {FBXLoader} from './build/FBXLoader.js';
 import {EffectComposer} from './build/EffectComposer.js';
 import {RenderPass} from './build/RenderPass.js';
 import {NURBSCurve} from './build/NURBSCurve.js';
+import { PointerLockControls } from "./build/PointerLockControls.js";
 
 //==================================
 //=======Lindenmayer Plant==========
@@ -28,6 +29,23 @@ let vertexShader, fragmentShader, uniforms, leavesMaterial;
 //deltaTime
 const clock = new THREE.Clock();
 
+//FPC
+//Forward or backward variable declaration
+let moveForward = false;
+let moveBackword = false;
+let moveLeft = false;
+let moveRight = false;
+
+
+var down = false;
+
+//Definition of movement speed and direction of movement
+const velocity = new THREE.Vector3(); //=0,0,0
+const direction = new THREE.Vector3();
+
+const color = new THREE.Color();
+let prevTime = performance.now();
+
 //create the scene
 scene = new THREE.Scene();
 ratio = window.innerWidth/window.innerHeight;
@@ -35,7 +53,7 @@ ratio = window.innerWidth/window.innerHeight;
 //for parameters see https://threejs.org/docs/#api/cameras/PerspectiveCamera
 camera = new THREE.PerspectiveCamera(45, ratio, 0.1, 1000);
 //set the camera position
-camera.position.set(0,50,50);
+camera.position.set(0,10,50);
 // and the direction
 camera.lookAt(0,0,0);
 
@@ -56,7 +74,7 @@ const renderPass = new RenderPass(scene, camera);
 composer.addPass(renderPass);
 
 //Controls
-var controls = new OrbitControls(camera, renderer.domElement );
+//var controls = new OrbitControls(camera, renderer.domElement );
 
 //========DEBUG===========
 initLights();
@@ -67,6 +85,12 @@ lindenmayerPlant();
 loadBaseGroundModel();
 loadLizard();
 renderGui();
+//controlFPC();//added
+const controls = new PointerLockControls(camera, document.body);//renderer.domElement);
+window.addEventListener("click", ()=> {
+  controls.lock();
+});
+//controlFPC();
 animate(); 
 //is placed at the bottom of code for get grass shader working. 
 //Edit: I fixed it be declaring shader variables and splitting your code into initGrassShader() and initGrassPlane() at the top of the document;
@@ -468,6 +492,77 @@ function renderGui()
   //colourFolder.add(mesh.rotation, "z", 0, Math.PI * 2, 0.001).name("Regenerate");
 }
 
+//FPC Camera movement
+const raycaster = new THREE.Raycaster();
+
+function onPointerMove( event ){
+   // console.log("clicked");
+    const pointer = new THREE.Vector2();
+    pointer.x = ( camera.position.x / window.innerWidth ) * 2 - 1; //event.clientX
+    pointer.y = -( camera.position.y / window.innerHeight ) * 2 + 1;
+    console.log(pointer.x)
+    console.log(pointer.y);
+
+    raycaster.setFromCamera(pointer, camera);
+    const intersects = raycaster.intersectObjects( scene.children, false );
+   // const intersects1 = raycaster.intersectObjects( plane, false );
+  // raycaster.layers.set( 1 ); 
+//plane.layers.enable( 1 );
+    if (intersects.length > 0){
+       intersects[0].object.material.color.set(0xff0000);
+       console.log("hit");
+    }
+    else {
+        console.log(" not hit");
+    }
+    
+}
+window.addEventListener( 'mousedown', onPointerMove, false);
+
+var arrow;
+
+// -- Keyboard controls --
+const onKeyDown = (e) => {
+  switch(e.code) {
+      case "KeyW":
+          moveForward = true;
+          break;
+      case "KeyA":
+          moveLeft = true;
+          break;
+      case "KeyS":
+      moveBackword = true;
+          break;
+      case "KeyD":
+      moveRight = true;
+          break;
+  }
+};
+
+const onKeyUp = (e) => {
+  switch(e.code) {
+      case "KeyW":
+          moveForward = false;
+          break;
+      case "KeyA":
+          moveLeft = false;
+          break;
+      case "KeyS":
+      moveBackword = false;
+          break;
+      case "KeyD":
+      moveRight = false;
+          break;
+  }
+};
+
+
+document.addEventListener("keydown", onKeyDown);
+document.addEventListener("keyup", onKeyUp);
+
+//let prevTime = performance.now();
+//}
+
 //Animate
 function animate(){
   requestAnimationFrame(animate);
@@ -477,9 +572,44 @@ function animate(){
 	leavesMaterial.uniforms.time.value = clock.getElapsedTime();
   leavesMaterial.uniformsNeedUpdate = true;
 
-  let increment = 0.001;
-  scene.rotation.y += increment;
-  controls.update();
+  //let increment = 0.001;
+  //scene.rotation.y += increment;
+  //controls.update();
+
+  //FPS 
+  const time = performance.now();
+
+  // forward and backward decisions
+  direction.z = Number(moveForward) - Number(moveBackword); //cast two variable to 1 to 0
+  direction.x = Number(moveRight) - Number(moveLeft);
+
+  // When the pointer turns ON
+  if(controls.isLocked){
+    
+    const delta = (time - prevTime) / 1000;
+
+    raycaster.setFromCamera( new THREE.Vector2(), camera );  
+    scene.remove ( arrow );
+    arrow = new THREE.ArrowHelper(raycaster.ray.direction, raycaster.ray.origin, 0.25, 0x000000 );
+    scene.add( arrow );
+    //Decay 
+    velocity.z -= velocity.z * 5.0 * delta;
+    velocity.x -= velocity.x * 5.0 * delta;
+
+    if(moveForward || moveBackword){
+        velocity.z -= direction.z * 200 * delta; //change movement speed here
+    }
+    if(moveRight || moveLeft){
+        velocity.x -= direction.x * 200 * delta; //change movement speed here
+    }
+    
+
+    controls.moveForward(-velocity.z * delta);
+    controls.moveRight(-velocity.x * delta);
+  } 
+  
+  prevTime = time;
+  renderer.render(scene, camera);
 
 }
 
