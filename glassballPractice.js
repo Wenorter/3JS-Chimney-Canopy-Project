@@ -33,14 +33,16 @@ loader.load('./BathroomHard_Pierre.hdr', function(texture){
     scene.background = texture;
     scene.environment = texture;
 
-    const sphereGeo = new THREE.SphereGeometry(1, 50, 50)
+    const sphereGeo = new THREE.BoxGeometry(10, 8, 10)
     const sphereMat = new THREE.MeshPhysicalMaterial({
         roughness: 0,
         metalness: 0,
-        color: 0xFFFF00,
+        color: 0xDDFFFF,
         transmission: 1,
         ior: 2.33,
-        thickness: 1
+        thickness: 0.1,
+        specularIntensity: 1.0,
+        clearcoat: 1.0
     });
     const sphereMesh = new THREE.Mesh(sphereGeo, sphereMat);
     scene.add(sphereMesh);
@@ -58,7 +60,7 @@ loader.load('./BathroomHard_Pierre.hdr', function(texture){
     scene.add(sphere2Mesh);
     sphere2Mesh.position.x -= 1.5
     */
-    const cubeGeo = new THREE.BoxGeometry(0.3, 0.3, 0.3)
+    const cubeGeo = new THREE.BoxGeometry(2, 2, 2)
     const cubeMat = new THREE.MeshStandardMaterial({
         color: 0xFF0000
     });
