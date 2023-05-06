@@ -71,9 +71,13 @@ function getPointLight(color){
     mesh.add(light);
 
     const circle = new THREE.Object3D();
-    circle.position.y = 1;
-    const radius = 5.5;
+    circle.position.x = (20 * Math.random()) - 10;
+    circle.position.y = (20 * Math.random()) - 10;
+    circle.position.z = (20 * Math.random()) - 10;
+    const radius = 0.5;
     mesh.position.x = radius;
+    mesh.position.y = radius;
+    mesh.position.z = radius;
     circle.rotation.x = THREE.MathUtils.degToRad(90);
     circle.rotation.y = Math.random() * Math.PI * 2;
     circle.add(mesh)
@@ -135,8 +139,8 @@ function animate(){
     pLights.forEach( l => l.update());
     render();
   
-    let increment = 0.001;
-    scene.rotation.y += increment;
+    //let increment = 0.001;
+    //scene.rotation.y += increment;
     controls.update();
   
 }

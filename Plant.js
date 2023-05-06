@@ -380,6 +380,71 @@ function loadLizard(){
   });
 }
 
+// Fireflies
+
+function getPointLight(color){
+
+  const light = new THREE.PointLight(color, 4, 15.0);
+
+  //light ball
+  const geo = new THREE.SphereGeometry(0.05, 30, 30);
+  const mat = new THREE.MeshBasicMaterial({color});
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.add(light);
+
+  const circle = new THREE.Object3D();
+  circle.position.x = (20 * Math.random()) - 10;
+  circle.position.y = (20 * Math.random()) - 10;
+  circle.position.z = (20 * Math.random()) - 10;
+  const radius = 0.5;
+  mesh.position.x = radius;
+  mesh.position.y = radius;
+  mesh.position.z = radius;
+  circle.rotation.x = THREE.MathUtils.degToRad(90);
+  circle.rotation.y = Math.random() * Math.PI * 2;
+  circle.add(mesh)
+
+  const glowMat = new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.15
+    });
+
+    const glowMesh = new THREE.Mesh(geo, glowMat);
+    glowMesh.scale.multiplyScalar(1.5);
+    const glowMesh2 = new THREE.Mesh(geo, glowMat);
+    glowMesh2.scale.multiplyScalar(2.5);
+    const glowMesh3 = new THREE.Mesh(geo, glowMat);
+    glowMesh3.scale.multiplyScalar(4);
+    const glowMesh4 = new THREE.Mesh(geo, glowMat);
+    glowMesh4.scale.multiplyScalar(6);
+
+    mesh.add(glowMesh);
+    mesh.add(glowMesh2);
+    mesh.add(glowMesh3);
+    mesh.add(glowMesh4);
+
+  const rate = Math.random() * 0.005 + 0.005;
+  function update(){
+      circle.rotation.z += rate;
+  }
+
+  return{
+      obj: circle,
+      update,
+  }
+}
+
+const colors = [0xFF0000, 0x00FF00, 0x0000FF, 0xFFFF00, 0xFF00FF, 0x00FFFF];
+const pLights = []
+let pLight;
+
+for (let i = 0; i < colors.length; i += 1) {
+  pLight = getPointLight(colors[i])
+  scene.add(pLight.obj);
+  pLights.push(pLight);
+}
+
 //Music
 function PlayAudio(){
 const listener = new THREE.AudioListener();
@@ -417,96 +482,6 @@ function loadBaseGroundModel(){
       scene.add(chimneyCanopyBase);
     });
 }
-
-  const WIDTH = window.innerWidth;
-  const HEIGHT = window.innerHeight;
-  //skip camera, scene, renderer
-  //we already have control 
-  const clock = new THREE.Clock();
-
-  const vertexShader = `
-    varying vec2 vUv;
-    uniform float time;
-    
-    void main() {
-
-      vUv = uv;
-      
-      // VERTEX POSITION
-      
-      vec4 mvPosition = vec4(position, 1.0);
-      #ifdef USE_INSTANCING
-        mvPosition = instanceMatrix * mvPosition;
-      #endif
-      
-      // DISPLACEMENT
-      
-      // here the displacement is made stronger on the blades tips.
-      float dispPower = 1.0 - cos( uv.y * 3.1416 / 2.0 );
-      
-      float displacement = sin( mvPosition.z + time * 10.0 ) * ( 0.1 * dispPower );
-      mvPosition.z += displacement;
-      
-      //
-      
-      vec4 modelViewPosition = modelViewMatrix * mvPosition;
-      gl_Position = projectionMatrix * modelViewPosition;
-
-    }
-  `;
-
-  const fragmentShader = `
-    varying vec2 vUv;
-    
-    void main() {
-      vec3 baseColor = vec3(1, 0.2, 0.7); // was 0.41, 1.0, 0.5 
-      float clarity = (vUv.y * 0.5 ) + 0.5;
-      gl_FragColor = vec4(baseColor * clarity, 1 );
-    }
-  `;
-
-  const uniforms = {
-    time: {
-      value: 0
-    }
-  }
-
-  const leavesMaterial = new THREE.ShaderMaterial({
-    vertexShader,
-    fragmentShader,
-    uniforms,
-    side: THREE.DoubleSide
-  });
-
-  /////////
-  // MESH
-  /////////
-
-  const instanceNumber = 500; //was 5000
-  const dummy = new THREE.Object3D();
-
-  const geometry = new THREE.PlaneGeometry(0.1, 1, 1, 4);// was 0.1, 1, 1, 4
-  geometry.translate(0, 3, 0); // move grass blade geometry lowest point at 0. // original position is 0, 0.5, 0
-
-  const instancedMesh = new THREE.InstancedMesh(geometry, leavesMaterial, instanceNumber);
-
-  scene.add(instancedMesh);
-
-  // Position and scale the grass blade instances randomly.
-
-  for (let i = 0 ; i < instanceNumber; i++) {
-
-    dummy.position.set(
-      ( Math.random() - 0.5 ) * 40, //original rane is ( Math.random() - 0.5 ) * 10, 0, ( Math.random() - 0.5 ) * 10
-      0,
-      ( Math.random() - 0.5 ) * 40
-    ); 
-
-    dummy.scale.setScalar(0.5 + Math.random() * 0.5);
-    dummy.rotation.y = Math.random() * Math.PI;
-    dummy.updateMatrix();
-    instancedMesh.setMatrixAt(i, dummy.matrix);
-    }
 
 //Dat GUI
 function renderGui()
@@ -561,6 +536,7 @@ function renderGui()
 //Animate
 function animate(){
   requestAnimationFrame(animate);
+  pLights.forEach( l => l.update());
   render();
   //grass shader animation
   // Hand a time variable to vertex shader for wind displacement.
@@ -573,11 +549,23 @@ function animate(){
 
 }
 
-animate();
-
 function render() 
 {
     composer.render(scene,camera);
 }
+
+//this fucntion is called when the window is resized
+var MyResize = function ( )
+{
+var width = window.innerWidth;
+var height = window.innerHeight;
+renderer.setSize(width,height);
+camera.aspect = width/height;
+camera.updateProjectionMatrix();
+renderer.render(scene,camera);
+};
+
+//link the resize of the window to the update of the camera
+window.addEventListener( 'resize', MyResize);
 
 
