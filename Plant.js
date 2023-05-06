@@ -21,6 +21,11 @@ var dirLight, dirLightColour,dirLightInten;
 var plantFirstColour, plantSecondColour, plantThirdColour;
 var backgroundColour;
 
+var fireflyColor = new THREE.Color( 0x33ff33 );
+var rate = Math.random() * 0.005 + 0.005;
+
+let pLight;
+
 let plane;
 
 //shaders
@@ -381,22 +386,21 @@ function loadLizard(){
 }
 
 // Fireflies
-
 function getPointLight(color){
 
-  const light = new THREE.PointLight(color, 4, 15.0);
+  var light = new THREE.PointLight(color, 1, 15.0);
 
   //light ball
   const geo = new THREE.SphereGeometry(0.05, 30, 30);
-  const mat = new THREE.MeshBasicMaterial({color});
+  var mat = new THREE.MeshBasicMaterial({color});
   const mesh = new THREE.Mesh(geo, mat);
   mesh.add(light);
 
   const circle = new THREE.Object3D();
-  circle.position.x = (20 * Math.random()) - 10;
-  circle.position.y = (20 * Math.random()) - 10;
-  circle.position.z = (20 * Math.random()) - 10;
-  const radius = 0.5;
+  circle.position.x = (25 * Math.random()) - 12.5;
+  circle.position.y = (5 * Math.random()) + 10;
+  circle.position.z = (25 * Math.random()) - 12.5;
+  const radius = 5;
   mesh.position.x = radius;
   mesh.position.y = radius;
   mesh.position.z = radius;
@@ -404,7 +408,7 @@ function getPointLight(color){
   circle.rotation.y = Math.random() * Math.PI * 2;
   circle.add(mesh)
 
-  const glowMat = new THREE.MeshBasicMaterial({
+  var glowMat = new THREE.MeshBasicMaterial({
       color,
       transparent: true,
       opacity: 0.15
@@ -424,7 +428,6 @@ function getPointLight(color){
     mesh.add(glowMesh3);
     mesh.add(glowMesh4);
 
-  const rate = Math.random() * 0.005 + 0.005;
   function update(){
       circle.rotation.z += rate;
   }
@@ -435,10 +438,7 @@ function getPointLight(color){
   }
 }
 
-const colors = [0xFF0000, 0x00FF00, 0x0000FF, 0xFFFF00, 0xFF00FF, 0x00FFFF];
-const pLights = []
-let pLight;
-
+var colors = [fireflyColor, fireflyColor, fireflyColor, fireflyColor, fireflyColor, fireflyColor, fireflyColor, fireflyColor, fireflyColor, fireflyColor,];
 for (let i = 0; i < colors.length; i += 1) {
   pLight = getPointLight(colors[i])
   scene.add(pLight.obj);
@@ -497,7 +497,8 @@ function renderGui()
     dirLightInten: 0.05,
     plantFirstColour: 0xffffff, //white
     plantSecondColour: 0xffffff, //white
-    plantThirdColour: 0xffffff //white
+    plantThirdColour: 0xffffff, //white
+    fireflyColor: 0x33ff33
   }
 
   let colourFolder = gui.addFolder("Scene Colour Management");
@@ -522,6 +523,10 @@ function renderGui()
   {
     dirLight.intensity = col.dirLightInten;
   })
+
+  gui.addColor(col, 'fireflyColor').name("Firefly Color").onChange(function(e){
+    fcolor.setHex(e)
+  });
   //colourFolder.addColor(col, "ambLightColour").name("Ambient Light").onChange(() => 
   //{
     //ambLight.color.set(col.ambLightColour);
@@ -536,7 +541,6 @@ function renderGui()
 //Animate
 function animate(){
   requestAnimationFrame(animate);
-  pLights.forEach( l => l.update());
   render();
   //grass shader animation
   // Hand a time variable to vertex shader for wind displacement.
