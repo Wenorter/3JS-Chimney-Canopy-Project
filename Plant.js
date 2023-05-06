@@ -5,7 +5,7 @@ import {OrbitControls} from './build/OrbitControls.js';
 import {FBXLoader} from './build/FBXLoader.js';
 import {EffectComposer} from './build/EffectComposer.js';
 import {RenderPass} from './build/RenderPass.js';
-import {NURBSCurve} from './build/NURBSCurve.js';
+import {UnrealBloomPass} from './build/UnrealBloomPass.js';
 
 //==================================
 //=======Lindenmayer Plant==========
@@ -23,10 +23,14 @@ var backgroundColour;
 
 let plane;
 
-//shaders
+//Shaders
 let vertexShader, fragmentShader, uniforms, leavesMaterial;
-//deltaTime
+
+//Delta Time
 const clock = new THREE.Clock();
+
+//Loading Screen 
+const loadingManager = new THREE.LoadingManager();
 
 //create the scene
 scene = new THREE.Scene();
@@ -52,13 +56,20 @@ document.body.appendChild(renderer.domElement);
 
 //Effect Composer
 const composer = new EffectComposer(renderer);
+
+//Onlu add passes after render pass has been added first
 const renderPass = new RenderPass(scene, camera);
 composer.addPass(renderPass);
 
+const bloomPass = new UnrealBloomPass( new THREE.Vector2( window.innerWidth, window.innerHeight ), 0.5, 0.4, 0.85 );
+composer.addPass(bloomPass);
+
+
 //Controls
-var controls = new OrbitControls(camera, renderer.domElement );
+var controls = new OrbitControls(camera, renderer.domElement);
 
 //========DEBUG===========
+initLoadingScreen();
 initLights();
 loadSkybox();
 initGrassShader();
@@ -71,19 +82,55 @@ animate();
 //is placed at the bottom of code for get grass shader working. 
 //Edit: I fixed it be declaring shader variables and splitting your code into initGrassShader() and initGrassPlane() at the top of the document;
 //========================
-
 //Event Listeners
+//========================
+
+//Window Resize
 window.addEventListener('resize', onWindowResize);
+//Audio
 window.addEventListener('click', () => {PlayAudio()}, {once: true});
+//Loading Screen
+const dynamicLoadscreen = document.querySelector(".progress-bar-container");
+dynamicLoadscreen.addEventListener("mousemove", (e) => {
+  dynamicLoadscreen.style.backgroundPositionX = -e.offsetX * 0.05 + "px";
+  dynamicLoadscreen.style.backgroundPositionY = -e.offsetY * 0.05 + "px";
+});
+//========================
 
 //Handle window resize
 function onWindowResize() 
 {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
-
   renderer.setSize(window.innerWidth, window.innerHeight);
-  controls.handleResize();
+}
+
+//Loading Screen
+function initLoadingScreen(){
+
+  //Description disabled while loading screen is active
+  const descriptionContainer = document.getElementById("info");
+  descriptionContainer.style.display = "none";
+
+  const progressBar = document.getElementById('progress-bar');
+  loadingManager.onProgress = function(url, loaded, total)
+  {
+    progressBar.value = (loaded / total) * 100;
+    console.log(`Started loading: ${url}`);
+  }
+
+  const progressBarContainer = document.querySelector(".progress-bar-container");
+  loadingManager.onLoad = function(){
+    //When loaded disable loading screen and enable description
+    descriptionContainer.style.display = "true";
+    progressBarContainer.style.opacity = "0";
+    setTimeout(callback, 3000); //fade-out animation 3sec, meaning this has to be 3000 
+  }
+  //completely remove loading screen after fading out animation
+  //so you can access orbit controls
+  var callback = function() {
+    progressBarContainer.style.display = "none";
+  }
 }
 
 //Lighting
@@ -359,7 +406,7 @@ function lindenmayerPlant(){
 
 //Pink Lizard
 function loadLizard(){
-  const fbxLoader = new FBXLoader();
+  const fbxLoader = new FBXLoader(loadingManager);
   fbxLoader.setResourcePath("./textures/pink_lizard/");
   fbxLoader.load('./model/pink_lizard.fbx', function(lizard) {
 
@@ -397,25 +444,24 @@ audioLoader.load('./music/progfox-overcast.mp3', function(buffer){
 
 //Base Ground Model
 function loadBaseGroundModel(){
+  const fbxLoader = new FBXLoader(loadingManager);
+    fbxLoader.setResourcePath("./textures/base/");
+    fbxLoader.load('./model/chimney_canopy_base.fbx', function(chimneyCanopyBase) {
 
-      const fbxLoader = new FBXLoader();
-      fbxLoader.setResourcePath("./textures/base/");
-      fbxLoader.load('./model/chimney_canopy_base.fbx', function(chimneyCanopyBase) {
+    chimneyCanopyBase.traverse(function(child){
+        if (child.isMesh) 
+        {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      } 
+    );
 
-      chimneyCanopyBase.traverse(function(child){
-          if (child.isMesh) 
-          {
-            child.castShadow = true;
-            child.receiveShadow = true;
-          }
-        } 
-      );
-
-      chimneyCanopyBase.userData.name = "Chimney Canopy Base";
-      chimneyCanopyBase.scale.setScalar(0.04);
-      dirLight.target = chimneyCanopyBase;
-      scene.add(chimneyCanopyBase);
-    });
+    chimneyCanopyBase.userData.name = "Chimney Canopy Base";
+    chimneyCanopyBase.scale.setScalar(0.04);
+    dirLight.target = chimneyCanopyBase;
+    scene.add(chimneyCanopyBase);
+  });
 }
 
 //Dat GUI
