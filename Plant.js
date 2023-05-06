@@ -26,6 +26,10 @@ let plane;
 //Shaders
 let vertexShader, fragmentShader, uniforms, leavesMaterial;
 
+//Fireflies
+const pLights = []
+let pLight;
+
 //Delta Time
 const clock = new THREE.Clock();
 
@@ -64,13 +68,13 @@ composer.addPass(renderPass);
 const bloomPass = new UnrealBloomPass( new THREE.Vector2( window.innerWidth, window.innerHeight ), 0.5, 0.4, 0.85 );
 composer.addPass(bloomPass);
 
-
 //Controls
 var controls = new OrbitControls(camera, renderer.domElement);
 
 //========DEBUG===========
 initLoadingScreen();
 initLights();
+initFireFlies();
 loadSkybox();
 initGrassShader();
 initGrassPlane();
@@ -141,6 +145,72 @@ function initLights(){
   dirLight = new THREE.DirectionalLight(dirLightColour, dirLightInten);
   dirLight.position.set(0, 500, 500);
   scene.add(dirLight);
+}
+
+function initFireFlies()
+{
+  function getPointLight(color){
+
+    const light = new THREE.PointLight(color, 4, 15.0);
+  
+    //light ball
+    const geo = new THREE.SphereGeometry(0.05, 30, 30);
+    const mat = new THREE.MeshBasicMaterial({color});
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.add(light);
+  
+    const circle = new THREE.Object3D();
+    circle.position.x = (20 * Math.random()) - 10;
+    circle.position.y = (20 * Math.random()) - 10;
+    circle.position.z = (20 * Math.random()) - 10;
+    const radius = 0.5;
+    mesh.position.x = radius;
+    mesh.position.y = radius;
+    mesh.position.z = radius;
+    circle.rotation.x = THREE.MathUtils.degToRad(90);
+    circle.rotation.y = Math.random() * Math.PI * 2;
+    circle.add(mesh)
+  
+    const glowMat = new THREE.MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity: 0.15
+      });
+  
+      const glowMesh = new THREE.Mesh(geo, glowMat);
+      glowMesh.scale.multiplyScalar(1.5);
+      const glowMesh2 = new THREE.Mesh(geo, glowMat);
+      glowMesh2.scale.multiplyScalar(2.5);
+      const glowMesh3 = new THREE.Mesh(geo, glowMat);
+      glowMesh3.scale.multiplyScalar(4);
+      const glowMesh4 = new THREE.Mesh(geo, glowMat);
+      glowMesh4.scale.multiplyScalar(6);
+  
+      mesh.add(glowMesh);
+      mesh.add(glowMesh2);
+      mesh.add(glowMesh3);
+      mesh.add(glowMesh4);
+  
+    const rate = Math.random() * 0.1; //add speed variable
+    function update(){
+        circle.rotation.z += rate;
+    }
+  
+    return{
+        obj: circle,
+        update,
+    }
+  }
+  
+  //make them the same colour, so just one colour
+  //also you probably don't need an array
+  const colors = [0xFF0000, 0x00FF00, 0x0000FF, 0xFFFF00, 0xFF00FF, 0x00FFFF];
+  
+  for (let i = 0; i < colors.length; i += 1) {
+    pLight = getPointLight(colors[i])
+    scene.add(pLight.obj);
+    pLights.push(pLight);
+  }
 }
 
 //Skybox
@@ -518,13 +588,18 @@ function renderGui()
 function animate(){
   requestAnimationFrame(animate);
   render();
+
+  //Fireflies movement
+  pLights.forEach( l => l.update());
   //grass shader animation
   // Hand a time variable to vertex shader for wind displacement.
 	leavesMaterial.uniforms.time.value = clock.getElapsedTime();
   leavesMaterial.uniformsNeedUpdate = true;
 
   let increment = 0.001;
-  scene.rotation.y += increment;
+
+  //re-enable this after fireflies full implementation
+  //scene.rotation.y += increment;
   controls.update();
 
 }
