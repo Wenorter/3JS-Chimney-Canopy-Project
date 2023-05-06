@@ -56,6 +56,7 @@ camera = new THREE.PerspectiveCamera(45, ratio, 0.1, 1000);
 camera.position.set(0,10,50);
 // and the direction
 camera.lookAt(0,0,0);
+const raycaster = new THREE.Raycaster();
 
 //Create the webgl renderer
 renderer = new THREE.WebGLRenderer();
@@ -491,7 +492,7 @@ function renderGui()
 }
 
 //FPC Camera movement
-const raycaster = new THREE.Raycaster();
+//const raycaster = new THREE.Raycaster();
 
 function onPointerMove( event ){
    // console.log("clicked");
@@ -554,12 +555,43 @@ const onKeyUp = (e) => {
   }
 };
 
+function FPCanimate(){
+    //FPS 
+    const time = performance.now();
+
+    // forward and backward decisions
+    direction.z = Number(moveForward) - Number(moveBackword); //cast two variable to 1 to 0
+    direction.x = Number(moveRight) - Number(moveLeft);
+  
+    // When the pointer turns ON
+    if(controls.isLocked){
+      
+      const delta = (time - prevTime) / 1000;
+  
+      raycaster.setFromCamera( new THREE.Vector2(), camera );  
+      scene.remove ( arrow );
+      arrow = new THREE.ArrowHelper(raycaster.ray.direction, raycaster.ray.origin, 0.25, 0x000000 );
+      scene.add( arrow );
+      //Decay 
+      velocity.z -= velocity.z * 5.0 * delta;
+      velocity.x -= velocity.x * 5.0 * delta;
+  
+      if(moveForward || moveBackword){
+          velocity.z -= direction.z * 200 * delta; //change movement speed here
+      }
+      if(moveRight || moveLeft){
+          velocity.x -= direction.x * 200 * delta; //change movement speed here
+      }
+      
+      controls.moveForward(-velocity.z * delta);
+      controls.moveRight(-velocity.x * delta);
+    } 
+    
+    prevTime = time;
+}
 
 document.addEventListener("keydown", onKeyDown);
 document.addEventListener("keyup", onKeyUp);
-
-//let prevTime = performance.now();
-//}
 
 //Animate
 function animate(){
@@ -573,39 +605,8 @@ function animate(){
   //let increment = 0.001;
   //scene.rotation.y += increment;
   //controls.update();
-
-  //FPS 
-  const time = performance.now();
-
-  // forward and backward decisions
-  direction.z = Number(moveForward) - Number(moveBackword); //cast two variable to 1 to 0
-  direction.x = Number(moveRight) - Number(moveLeft);
-
-  // When the pointer turns ON
-  if(controls.isLocked){
-    
-    const delta = (time - prevTime) / 1000;
-
-    raycaster.setFromCamera( new THREE.Vector2(), camera );  
-    scene.remove ( arrow );
-    arrow = new THREE.ArrowHelper(raycaster.ray.direction, raycaster.ray.origin, 0.25, 0x000000 );
-    scene.add( arrow );
-    //Decay 
-    velocity.z -= velocity.z * 5.0 * delta;
-    velocity.x -= velocity.x * 5.0 * delta;
-
-    if(moveForward || moveBackword){
-        velocity.z -= direction.z * 200 * delta; //change movement speed here
-    }
-    if(moveRight || moveLeft){
-        velocity.x -= direction.x * 200 * delta; //change movement speed here
-    }
-    
-    controls.moveForward(-velocity.z * delta);
-    controls.moveRight(-velocity.x * delta);
-  } 
   
-  prevTime = time;
+  FPCanimate();
   renderer.render(scene, camera);
 
 }
