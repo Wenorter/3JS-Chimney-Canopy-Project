@@ -21,10 +21,9 @@ var dirLight, dirLightColour,dirLightInten;
 var plantFirstColour, plantSecondColour, plantThirdColour;
 var backgroundColour;
 
-var fireflyColor = new THREE.Color( 0x33ff33 );
-var rate = Math.random() * 0.005 + 0.005;
-
 let pLight;
+var fireflyColor = new THREE.Color( 0x33ff33 );
+const rate = Math.random() * 0.005 + 0.005;
 
 let plane;
 
@@ -438,12 +437,24 @@ function getPointLight(color){
   }
 }
 
-var colors = [fireflyColor, fireflyColor, fireflyColor, fireflyColor, fireflyColor, fireflyColor, fireflyColor, fireflyColor, fireflyColor, fireflyColor,];
-for (let i = 0; i < colors.length; i += 1) {
-  pLight = getPointLight(colors[i])
-  scene.add(pLight.obj);
-  pLights.push(pLight);
-}
+pLight = getPointLight(fireflyColor);
+scene.add(pLight.obj);
+
+pLight = getPointLight(fireflyColor);
+scene.add(pLight.obj);
+
+pLight = getPointLight(fireflyColor);
+scene.add(pLight.obj);
+
+pLight = getPointLight(fireflyColor);
+scene.add(pLight.obj);
+
+pLight = getPointLight(fireflyColor);
+scene.add(pLight.obj);
+
+pLight = getPointLight(fireflyColor);
+scene.add(pLight.obj);
+
 
 //Music
 function PlayAudio(){
