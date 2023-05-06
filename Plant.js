@@ -21,9 +21,10 @@ var dirLight, dirLightColour,dirLightInten;
 var plantFirstColour, plantSecondColour, plantThirdColour;
 var backgroundColour;
 
+var fireflyColorHex = new THREE.Color( 0x33ff33 );
+var rate = Math.random() * 0.005 + 0.005;
+
 let pLight;
-var fireflyColor = new THREE.Color( 0x33ff33 );
-const rate = Math.random() * 0.005 + 0.005;
 
 let plane;
 
@@ -437,24 +438,18 @@ function getPointLight(color){
   }
 }
 
-pLight = getPointLight(fireflyColor);
-scene.add(pLight.obj);
-
-pLight = getPointLight(fireflyColor);
-scene.add(pLight.obj);
-
-pLight = getPointLight(fireflyColor);
-scene.add(pLight.obj);
-
-pLight = getPointLight(fireflyColor);
-scene.add(pLight.obj);
-
-pLight = getPointLight(fireflyColor);
-scene.add(pLight.obj);
-
-pLight = getPointLight(fireflyColor);
-scene.add(pLight.obj);
-
+pLight = getPointLight(fireflyColorHex)
+scene.add(pLight.obj)
+pLight = getPointLight(fireflyColorHex)
+scene.add(pLight.obj)
+pLight = getPointLight(fireflyColorHex)
+scene.add(pLight.obj)
+pLight = getPointLight(fireflyColorHex)
+scene.add(pLight.obj)
+pLight = getPointLight(fireflyColorHex)
+scene.add(pLight.obj)
+pLight = getPointLight(fireflyColorHex)
+scene.add(pLight.obj)
 
 //Music
 function PlayAudio(){
@@ -535,8 +530,8 @@ function renderGui()
     dirLight.intensity = col.dirLightInten;
   })
 
-  gui.addColor(col, 'fireflyColor').name("Firefly Color").onChange(function(e){
-    fcolor.setHex(e)
+  gui.addColor(col, 'fireflyColor').name("Firefly Color").onChange(() => {
+    fireflyColorHex.setHex.setHex(col.fireflyColor);
   });
   //colourFolder.addColor(col, "ambLightColour").name("Ambient Light").onChange(() => 
   //{
