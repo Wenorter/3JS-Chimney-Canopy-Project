@@ -21,22 +21,16 @@ var dirLight, dirLightColour,dirLightInten;
 var plantFirstColour, plantSecondColour, plantThirdColour;
 var backgroundColour;
 
-var fireflyColorHex = new THREE.Color( 0x33ff33 );
-var intensity = 1;
-var rate = Math.random() * 0.005 + 0.005;
-
-//fireflys variable 
-let pLight;
-const pLights = [];
-
+//Grass Shader
 let plane;
-
-//Shaders
 let vertexShader, fragmentShader, uniforms, leavesMaterial;
 
 //Fireflies
 const pLights = []
 let pLight;
+var fireflyColorHex = new THREE.Color(0x33ff33);
+var intensity = 1;
+var rate = Math.random() * 0.005 + 0.005;
 
 //Delta Time
 const clock = new THREE.Clock();
@@ -157,34 +151,35 @@ function initLights(){
 
 function initFireFlies()
 {
-  function getPointLight(color){
+  // Fireflies
+  function getPointLight(){
 
-    const light = new THREE.PointLight(color, 4, 15.0);
-  
+    var light = new THREE.PointLight(fireflyColorHex, intensity, 15.0);
+
     //light ball
     const geo = new THREE.SphereGeometry(0.05, 30, 30);
-    const mat = new THREE.MeshBasicMaterial({color});
+    var mat = new THREE.MeshBasicMaterial({color: fireflyColorHex});
     const mesh = new THREE.Mesh(geo, mat);
     mesh.add(light);
-  
+
     const circle = new THREE.Object3D();
-    circle.position.x = (20 * Math.random()) - 10;
-    circle.position.y = (20 * Math.random()) - 10;
-    circle.position.z = (20 * Math.random()) - 10;
-    const radius = 0.5;
+    circle.position.x = (25 * Math.random()) - 12.5;
+    circle.position.y = (5 * Math.random()) + 10;
+    circle.position.z = (25 * Math.random()) - 12.5;
+    const radius = 5;
     mesh.position.x = radius;
     mesh.position.y = radius;
     mesh.position.z = radius;
     circle.rotation.x = THREE.MathUtils.degToRad(90);
     circle.rotation.y = Math.random() * Math.PI * 2;
     circle.add(mesh)
-  
-    const glowMat = new THREE.MeshBasicMaterial({
-        color,
+
+    var glowMat = new THREE.MeshBasicMaterial({
+        color: fireflyColorHex,
         transparent: true,
         opacity: 0.15
       });
-  
+
       const glowMesh = new THREE.Mesh(geo, glowMat);
       glowMesh.scale.multiplyScalar(1.5);
       const glowMesh2 = new THREE.Mesh(geo, glowMat);
@@ -193,29 +188,28 @@ function initFireFlies()
       glowMesh3.scale.multiplyScalar(4);
       const glowMesh4 = new THREE.Mesh(geo, glowMat);
       glowMesh4.scale.multiplyScalar(6);
-  
+
       mesh.add(glowMesh);
       mesh.add(glowMesh2);
       mesh.add(glowMesh3);
       mesh.add(glowMesh4);
-  
-    const rate = Math.random() * 0.1; //add speed variable
+
     function update(){
         circle.rotation.z += rate;
+        light.color = fireflyColorHex;
+        light.intensity = intensity;
+        mat.color = fireflyColorHex;
+        glowMat.color = fireflyColorHex;
     }
-  
+
     return{
         obj: circle,
         update,
     }
   }
-  
-  //make them the same colour, so just one colour
-  //also you probably don't need an array
-  const colors = [0xFF0000, 0x00FF00, 0x0000FF, 0xFFFF00, 0xFF00FF, 0x00FFFF];
-  
-  for (let i = 0; i < colors.length; i += 1) {
-    pLight = getPointLight(colors[i])
+
+  for(let i = 0; i< 10; i+= 1){
+    pLight = getPointLight()
     scene.add(pLight.obj);
     pLights.push(pLight);
   }
@@ -505,69 +499,6 @@ function loadLizard(){
   });
 }
 
-// Fireflies
-function getPointLight(){
-
-  var light = new THREE.PointLight(fireflyColorHex, intensity, 15.0);
-
-  //light ball
-  const geo = new THREE.SphereGeometry(0.05, 30, 30);
-  var mat = new THREE.MeshBasicMaterial({color: fireflyColorHex});
-  const mesh = new THREE.Mesh(geo, mat);
-  mesh.add(light);
-
-  const circle = new THREE.Object3D();
-  circle.position.x = (25 * Math.random()) - 12.5;
-  circle.position.y = (5 * Math.random()) + 10;
-  circle.position.z = (25 * Math.random()) - 12.5;
-  const radius = 5;
-  mesh.position.x = radius;
-  mesh.position.y = radius;
-  mesh.position.z = radius;
-  circle.rotation.x = THREE.MathUtils.degToRad(90);
-  circle.rotation.y = Math.random() * Math.PI * 2;
-  circle.add(mesh)
-
-  var glowMat = new THREE.MeshBasicMaterial({
-      color: fireflyColorHex,
-      transparent: true,
-      opacity: 0.15
-    });
-
-    const glowMesh = new THREE.Mesh(geo, glowMat);
-    glowMesh.scale.multiplyScalar(1.5);
-    const glowMesh2 = new THREE.Mesh(geo, glowMat);
-    glowMesh2.scale.multiplyScalar(2.5);
-    const glowMesh3 = new THREE.Mesh(geo, glowMat);
-    glowMesh3.scale.multiplyScalar(4);
-    const glowMesh4 = new THREE.Mesh(geo, glowMat);
-    glowMesh4.scale.multiplyScalar(6);
-
-    mesh.add(glowMesh);
-    mesh.add(glowMesh2);
-    mesh.add(glowMesh3);
-    mesh.add(glowMesh4);
-
-  function update(){
-      circle.rotation.z += rate;
-      light.color = fireflyColorHex;
-      light.intensity = intensity;
-      mat.color = fireflyColorHex;
-      glowMat.color = fireflyColorHex;
-  }
-
-  return{
-      obj: circle,
-      update,
-  }
-}
-
-for(let i = 0; i< 10; i+= 1){
-  pLight = getPointLight()
-  scene.add(pLight.obj);
-  pLights.push(pLight);
-}
-
 //Music
 function PlayAudio(){
 const listener = new THREE.AudioListener();
@@ -663,16 +594,6 @@ function renderGui()
   {
       intensity = col.fireflyIntensity;
   });
-;
-  //colourFolder.addColor(col, "ambLightColour").name("Ambient Light").onChange(() => 
-  //{
-    //ambLight.color.set(col.ambLightColour);
-  //})
-  //colourFolder.add(col, "ambLightColour", 0, 1, 0.005).name("AL Intensity");
-
-  //colourFolder.add(mesh.rotation, "y", 0, Math.PI * 2, 0.001).name("Secondary Clour");
-  //colourFolder.add(mesh.rotation, "z", 0, Math.PI * 2, 0.001).name("Accent Colour");
-  //colourFolder.add(mesh.rotation, "z", 0, Math.PI * 2, 0.001).name("Regenerate");
 }
 
 //Animate
@@ -688,12 +609,10 @@ function animate(){
   leavesMaterial.uniformsNeedUpdate = true;
 
   //firefly animation
-  pLights.forEach( l => l.update());
-
   let increment = 0.001;
 
   //re-enable this after fireflies full implementation
-  //scene.rotation.y += increment;
+  scene.rotation.y += increment;
   controls.update();
 
 }
