@@ -24,7 +24,9 @@ var backgroundColour;
 var fireflyColorHex = new THREE.Color( 0x33ff33 );
 var rate = Math.random() * 0.005 + 0.005;
 
+//fireflys variable 
 let pLight;
+const pLights = [];
 
 let plane;
 
@@ -438,18 +440,11 @@ function getPointLight(color){
   }
 }
 
-pLight = getPointLight(fireflyColorHex)
-scene.add(pLight.obj)
-pLight = getPointLight(fireflyColorHex)
-scene.add(pLight.obj)
-pLight = getPointLight(fireflyColorHex)
-scene.add(pLight.obj)
-pLight = getPointLight(fireflyColorHex)
-scene.add(pLight.obj)
-pLight = getPointLight(fireflyColorHex)
-scene.add(pLight.obj)
-pLight = getPointLight(fireflyColorHex)
-scene.add(pLight.obj)
+for(let i = 0; i<7; i+= 1){
+  pLight = getPointLight(fireflyColorHex)
+  scene.add(pLight.obj);
+  pLights.push(pLight);
+}
 
 //Music
 function PlayAudio(){
@@ -552,6 +547,9 @@ function animate(){
   // Hand a time variable to vertex shader for wind displacement.
 	leavesMaterial.uniforms.time.value = clock.getElapsedTime();
   leavesMaterial.uniformsNeedUpdate = true;
+
+  //firefly animation
+  pLights.forEach( l => l.update());
 
   let increment = 0.001;
   scene.rotation.y += increment;
