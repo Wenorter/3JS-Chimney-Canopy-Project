@@ -1,12 +1,11 @@
 
 import * as THREE from 'three';
 import {GUI} from './build/dat.gui.module.js';
-import {OrbitControls} from './build/OrbitControls.js';
 import {FBXLoader} from './build/FBXLoader.js';
+import {FirstPersonControls} from './build/FirstPersonControls.js';
+import {PointerLockControls} from "./build/PointerLockControls.js";
 import {EffectComposer} from './build/EffectComposer.js';
 import {RenderPass} from './build/RenderPass.js';
-import { PointerLockControls } from "./build/PointerLockControls.js";
-import {NURBSCurve} from './build/NURBSCurve.js';
 import {UnrealBloomPass} from './build/UnrealBloomPass.js';
 
 //==================================
@@ -37,18 +36,10 @@ var rate = Math.random() * 0.005 + 0.005;
 //Delta Time
 const clock = new THREE.Clock();
 
+//Loading Manager
 const loadingManager = new THREE.LoadingManager();
-let moveForward = false;
-let moveBackword = false;
-let moveLeft = false;
-let moveRight = false;
-var down = false;
-//Definition of movement speed and direction of movement
-const velocity = new THREE.Vector3(); //=0,0,0
-const direction = new THREE.Vector3();
-const color = new THREE.Color();
 
-//create the scene
+//Scene
 scene = new THREE.Scene();
 ratio = window.innerWidth/window.innerHeight;
 //create the perspective camera
@@ -60,7 +51,7 @@ camera.position.set(0,10,50);
 camera.lookAt(0,0,0);
 const raycaster = new THREE.Raycaster();
 
-//Create the webgl renderer
+//Webgl Renderer
 renderer = new THREE.WebGLRenderer();
 renderer.antialias = true;
 renderer.precision = "highp";
@@ -71,6 +62,16 @@ renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth,window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
+//Controls
+const FPCcontrols = new FirstPersonControls(camera, renderer.domElement);
+FPCcontrols.movementSpeed = 1000;
+FPCcontrols.lookSpeed = 3;
+
+var plControls = new PointerLockControls(camera, document.body);//renderer.domElement);
+window.addEventListener("click", ()=> {
+  plControls.lock();
+});
+
 //Effect Composer
 const composer = new EffectComposer(renderer);
 
@@ -80,13 +81,6 @@ composer.addPass(renderPass);
 
 const bloomPass = new UnrealBloomPass( new THREE.Vector2( window.innerWidth, window.innerHeight ), 0.5, 0.4, 0.85 );
 composer.addPass(bloomPass);
-
-//Controls
-//var controls = new OrbitControls(camera, renderer.domElement );
-const controls = new PointerLockControls(camera, document.body);//renderer.domElement);
-window.addEventListener("click", ()=> {
-  controls.lock();
-});
 
 //========DEBUG===========
 initLoadingScreen();
@@ -102,6 +96,30 @@ renderGui();
 animate(); 
 //is placed at the bottom of code for get grass shader working. 
 //Edit: I fixed it be declaring shader variables and splitting your code into initGrassShader() and initGrassPlane() at the top of the document;
+
+//Raycaster
+function onPointerMove(event){
+  // console.log("clicked");
+    const pointer = new THREE.Vector2();
+    pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1; //event.clientX
+    pointer.y = -( event.clientY / window.innerHeight ) * 2 + 1;
+    console.log(pointer.x)
+    console.log(pointer.y);
+
+    raycaster.setFromCamera(pointer, camera);
+    const intersects = raycaster.intersectObjects( scene.children, false );
+    // const intersects1 = raycaster.intersectObjects( plane, false );
+    // raycaster.layers.set( 1 ); 
+    //plane.layers.enable( 1 );
+    if (intersects.length > 0){
+      intersects[0].object.material.color.set(0xff0000);
+      console.log("hit");
+    }
+    else {
+        console.log("not hit");
+    }  
+}
+
 //========================
 //Event Listeners
 //========================
@@ -109,7 +127,7 @@ animate();
 //Window Resize
 window.addEventListener('resize', onWindowResize);
 //Audio
-window.addEventListener('click', () => {PlayAudio()}, {once: true});
+window.addEventListener('dblclick', () => {PlayAudio()}, {once: true});
 //Loading Screen
 const dynamicLoadscreen = document.querySelector(".progress-bar-container");
 dynamicLoadscreen.addEventListener("mousemove", (e) => {
@@ -611,108 +629,6 @@ function renderGui()
   });
 }
 
-//FPC Camera movement
-//const raycaster = new THREE.Raycaster();
-
-function onPointerMove( event ){
-   // console.log("clicked");
-    const pointer = new THREE.Vector2();
-    pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1; //event.clientX
-    pointer.y = -( event.clientY / window.innerHeight ) * 2 + 1;
-    console.log(pointer.x)
-    console.log(pointer.y);
-
-    raycaster.setFromCamera(pointer, camera);
-    const intersects = raycaster.intersectObjects( scene.children, false );
-    // const intersects1 = raycaster.intersectObjects( plane, false );
-    // raycaster.layers.set( 1 ); 
-    //plane.layers.enable( 1 );
-    if (intersects.length > 0){
-       intersects[0].object.material.color.set(0xff0000);
-       console.log("hit");
-    }
-    else {
-        console.log(" not hit");
-    }
-    
-}
-window.addEventListener( 'mousedown', onPointerMove, false);
-
-var arrow;
-
-// -- Keyboard controls --
-const onKeyDown = (e) => {
-  switch(e.code) {
-      case "KeyW":
-          moveForward = true;
-          break;
-      case "KeyA":
-          moveLeft = true;
-          break;
-      case "KeyS":
-      moveBackword = true;
-          break;
-      case "KeyD":
-      moveRight = true;
-          break;
-  }
-};
-
-const onKeyUp = (e) => {
-  switch(e.code) {
-      case "KeyW":
-          moveForward = false;
-          break;
-      case "KeyA":
-          moveLeft = false;
-          break;
-      case "KeyS":
-      moveBackword = false;
-          break;
-      case "KeyD":
-      moveRight = false;
-          break;
-  }
-};
-
-function FPCanimate(){
-    //FPS 
-    const time = performance.now();
-
-    // forward and backward decisions
-    direction.z = Number(moveForward) - Number(moveBackword); //cast two variable to 1 to 0
-    direction.x = Number(moveRight) - Number(moveLeft);
-  
-    // When the pointer turns ON
-    if(controls.isLocked){
-      
-      const delta = (time - prevTime) / 1000;
-  
-      raycaster.setFromCamera( new THREE.Vector2(), camera );  
-      scene.remove ( arrow );
-      arrow = new THREE.ArrowHelper(raycaster.ray.direction, raycaster.ray.origin, 0.25, 0x000000 );
-      scene.add( arrow );
-      //Decay 
-      velocity.z -= velocity.z * 5.0 * delta;
-      velocity.x -= velocity.x * 5.0 * delta;
-  
-      if(moveForward || moveBackword){
-          velocity.z -= direction.z * 200 * delta; //change movement speed here
-      }
-      if(moveRight || moveLeft){
-          velocity.x -= direction.x * 200 * delta; //change movement speed here
-      }
-      
-      controls.moveForward(-velocity.z * delta);
-      controls.moveRight(-velocity.x * delta);
-    } 
-    
-    prevTime = time;
-}
-
-document.addEventListener("keydown", onKeyDown);
-document.addEventListener("keyup", onKeyUp);
-
 //Animate
 function animate(){
   requestAnimationFrame(animate);
@@ -724,28 +640,12 @@ function animate(){
   // Hand a time variable to vertex shader for wind displacement.
 	leavesMaterial.uniforms.time.value = clock.getElapsedTime();
   leavesMaterial.uniformsNeedUpdate = true;
-
-  FPCanimate();
-
 }
 
 function render() 
 {
-    composer.render(scene,camera);
+  FPCcontrols.update(clock.getDelta());
+  composer.render(scene,camera);
 }
-
-//this fucntion is called when the window is resized
-var MyResize = function ( )
-{
-var width = window.innerWidth;
-var height = window.innerHeight;
-renderer.setSize(width,height);
-camera.aspect = width/height;
-camera.updateProjectionMatrix();
-renderer.render(scene,camera);
-};
-
-//link the resize of the window to the update of the camera
-window.addEventListener( 'resize', MyResize);
 
 
