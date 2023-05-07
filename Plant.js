@@ -497,8 +497,8 @@ function renderGui()
 function onPointerMove( event ){
    // console.log("clicked");
     const pointer = new THREE.Vector2();
-    pointer.x = ( camera.position.x / window.innerWidth ) * 2 - 1; //event.clientX
-    pointer.y = -( camera.position.y / window.innerHeight ) * 2 + 1;
+    pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1; //event.clientX
+    pointer.y = -( event.clientY / window.innerHeight ) * 2 + 1;
     console.log(pointer.x)
     console.log(pointer.y);
 
