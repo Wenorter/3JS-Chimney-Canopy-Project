@@ -22,8 +22,9 @@ body {
     height: 100%;
     visibility: visible;
     opacity: 1;
-    transition: visibility 0s, opacity 3s linear;
+    transition: visibility 0s, opacity 4s linear;
     background-image: url(./loadscreen/image/RW_CC_region_art.png);
+    background-color: rgb(34, 10, 34);
     background-repeat: no-repeat;
     background-size: cover;
     display: flex;

@@ -11,18 +11,11 @@ import {UnrealBloomPass} from './build/UnrealBloomPass.js';
 //=======Lindenmayer Plant==========
 //==================================
 
-//defaults
-let chimneyCanopyBase;
-let scene, ratio, camera;
-let renderer;
-
+//Lighting
 var ambLight, ambLightColour, ambLightInten;
 var dirLight, dirLightColour,dirLightInten;
-var plantFirstColour, plantSecondColour, plantThirdColour;
-var backgroundColour;
 
 //Grass Shader
-let plane;
 let vertexShader, fragmentShader, uniforms, leavesMaterial;
 
 //Fireflies
@@ -39,11 +32,11 @@ const clock = new THREE.Clock();
 const loadingManager = new THREE.LoadingManager();
 
 //Scene
-scene = new THREE.Scene();
-ratio = window.innerWidth/window.innerHeight;
+let scene = new THREE.Scene();
+let ratio = window.innerWidth/window.innerHeight;
 //create the perspective camera
 //for parameters see https://threejs.org/docs/#api/cameras/PerspectiveCamera
-camera = new THREE.PerspectiveCamera(45, ratio, 0.1, 1000);
+let camera = new THREE.PerspectiveCamera(45, ratio, 0.1, 1000);
 //set the camera position
 camera.position.set(0,10,50);
 // and the direction
@@ -51,7 +44,7 @@ camera.lookAt(0,0,0);
 const raycaster = new THREE.Raycaster();
 
 //Webgl Renderer
-renderer = new THREE.WebGLRenderer();
+let renderer = new THREE.WebGLRenderer();
 renderer.antialias = true;
 renderer.precision = "highp";
 renderer.shadowMap.enabled = true;
@@ -63,23 +56,16 @@ document.body.appendChild(renderer.domElement);
 
 //First Person Controls
 //Forward or backward variable declaration
+var arrow;
 let moveForward = false;
 let moveBackword = false;
 let moveLeft = false;
 let moveRight = false;
-var down = false;
 //Definition of movement speed and direction of movement
 const velocity = new THREE.Vector3(); //=0,0,0
 const direction = new THREE.Vector3();
-const color = new THREE.Color();
 let prevTime = performance.now();
-
-var arrow;
-
 var controls = new PointerLockControls(camera, document.body);
-window.addEventListener("click", ()=> {
-  controls.lock();
-});
 
 //Effect Composer
 const composer = new EffectComposer(renderer);
@@ -92,22 +78,28 @@ const bloomPass = new UnrealBloomPass( new THREE.Vector2( window.innerWidth, win
 composer.addPass(bloomPass);
 
 //========DEBUG===========
-initRaycaster();
-initKeyboardControls();
-initLoadingScreen();
-initLights();
-initFireFlies();
-loadSkybox();
-initGrassShader();
-initGrassPlane();
-lindenmayerPlant();
-loadBaseGroundModel();
-loadLizard();
-renderGui();
-animate(); 
-//is placed at the bottom of code for get grass shader working. 
-//Edit: I fixed it be declaring shader variables and splitting your code into initGrassShader() and initGrassPlane() at the top of the document;
-
+try {
+  initRaycaster();
+  initKeyboardControls();
+  initEventListeners();
+  initLoadingScreen();
+  initLights();
+  initFireFlies();
+  initSkybox();
+  initGrassShader();
+  initGrassPlane();
+  initLindenmayerPlant();
+  initBaseGroundModel();
+  initLizard();
+  initGui();
+  animate(); 
+} 
+catch (error) {
+  console.log("Something went wrong during initialisation.");
+  console.error(error);
+}
+//========================
+//First Person Controls and Raycaster
 function initRaycaster(){
   function onPointerMove(event){
     // console.log("clicked");
@@ -131,7 +123,8 @@ function initRaycaster(){
      }
   }
   //event listener
-  window.addEventListener( 'mousedown', onPointerMove, false);
+  window.addEventListener('mousedown', onPointerMove, false);
+  console.log("initRaycaster() loaded.");
 }
 
 function initKeyboardControls()
@@ -174,6 +167,8 @@ function initKeyboardControls()
   //First Person Control
   document.addEventListener("keydown", onKeyDown);
   document.addEventListener("keyup", onKeyUp);
+
+  console.log("initKeyboardControls() loaded.");
 }
 
 function FPCanimate(){
@@ -211,22 +206,27 @@ function FPCanimate(){
     prevTime = time;
 }
 
-//========================
 //Event Listeners
-//========================
+function initEventListeners()
+{
+  //Window Resize
+  window.addEventListener('resize', onWindowResize);
 
-//Window Resize
-window.addEventListener('resize', onWindowResize);
+  //Audio
+  window.addEventListener('click', () => {initPlayAudio()}, {once: true});
+  //Dynamic Loading Screen
+  const dynamicLoadscreen = document.querySelector(".progress-bar-container");
+  dynamicLoadscreen.addEventListener("mousemove", (e) => {
+    dynamicLoadscreen.style.backgroundPositionX = -e.offsetX * 0.05 + "px";
+    dynamicLoadscreen.style.backgroundPositionY = -e.offsetY * 0.05 + "px";
+  });
 
-//Audio
-window.addEventListener('dblclick', () => {PlayAudio()}, {once: true});
-//Dynamic Loading Screen
-const dynamicLoadscreen = document.querySelector(".progress-bar-container");
-dynamicLoadscreen.addEventListener("mousemove", (e) => {
-  dynamicLoadscreen.style.backgroundPositionX = -e.offsetX * 0.05 + "px";
-  dynamicLoadscreen.style.backgroundPositionY = -e.offsetY * 0.05 + "px";
-});
-//========================
+  //Pointer Lock Controls
+  window.addEventListener("click", ()=> {
+    controls.lock();
+  });
+  console.log("initEventListeners() loaded.");
+}
 
 //Handle window resize
 function onWindowResize() 
@@ -247,7 +247,7 @@ function initLoadingScreen(){
   loadingManager.onProgress = function(url, loaded, total)
   {
     progressBar.value = (loaded / total) * 100;
-    console.log(`Started loading: ${url}`);
+    console.log(`Started loading assets: ${url}`);
   }
 
   const progressBarContainer = document.querySelector(".progress-bar-container");
@@ -255,13 +255,14 @@ function initLoadingScreen(){
     //When loaded disable loading screen and enable description
     descriptionContainer.style.display = "true";
     progressBarContainer.style.opacity = "0";
-    setTimeout(callback, 3000); //fade-out animation 3sec, meaning this has to be 3000 
+    setTimeout(callback, 4000); //fade-out animation 4sec, meaning this has to be 4000 
   }
   //completely remove loading screen after fading out animation
   //so you can access orbit controls
   var callback = function() {
     progressBarContainer.style.display = "none";
   }
+  console.log("initLoadingScreen() loaded.");
 }
 
 //Lighting
@@ -272,11 +273,13 @@ function initLights(){
   dirLight = new THREE.DirectionalLight(dirLightColour, dirLightInten);
   dirLight.position.set(0, 500, 500);
   scene.add(dirLight);
+  console.log("initLights() loaded.");
 }
 
+//Fireflies
 function initFireFlies()
 {
-  // Fireflies
+  
   function getPointLight(){
 
     var light = new THREE.PointLight(fireflyColorHex, intensity, 15.0);
@@ -338,10 +341,11 @@ function initFireFlies()
     scene.add(pLight.obj);
     pLights.push(pLight);
   }
+  console.log("initFireFlies() loaded.");
 }
 
 //Skybox
-function loadSkybox(){
+function initSkybox(){
   //adding textures 
   const cubeTextureLoader = new THREE.CubeTextureLoader();
   scene.background = cubeTextureLoader.load([
@@ -352,6 +356,7 @@ function loadSkybox(){
     './images/rwcc/front.png',
     './images/rwcc/back.png',
   ])
+  console.log("initSkybox() loaded."); 
 }
 
 //Grass Shader
@@ -410,6 +415,8 @@ function initGrassShader(){
     uniforms,
     side: THREE.DoubleSide
   });
+
+  console.log("initGrassShader() loaded."); 
 }
 
 //Grass Plane
@@ -440,11 +447,12 @@ function initGrassPlane(){
     grass.updateMatrix();
     instancedMesh.setMatrixAt(i, grass.matrix);
   }
+  console.log("initGrassPlane() loaded."); 
 }
 
 //L-System Plant
-function lindenmayerPlant(){
-  //https://codepen.io/mikkamikka/pen/DrdzVK
+function initLindenmayerPlant(){
+//Reference: https://codepen.io/mikkamikka/pen/DrdzVK
 
   function Params() {
     this.iterations = 2;
@@ -465,9 +473,6 @@ function lindenmayerPlant(){
 
   var rules = new Rules();
   var params = new Params();
-
-  var clear = {clear: function()
-    {canvas.width = canvas.width;}};
 
   function GetAxiomTree() {
     var Waxiom = rules.axiom;
@@ -498,22 +503,17 @@ function lindenmayerPlant(){
     let plantVertices = plantGeometry;
     var Wrule = GetAxiomTree();
     var n = Wrule.length;
-    var stackX = []; var stackY = [];  var stackZ = []; var stackA = [];
-    var stackV = []; var stackAxis = [];
+    var stackA = [];
+    var stackV = []; 
 
     var theta = params.theta * Math.PI / 180; 
     var scale = params.scale;
     var angle = params.angle * Math.PI / 180;
 
     var x0 = x_init; var y0 = y_init; var z0 = z_init;
-    var x; var y; var z;  
     var rota = 0, rota2 = 0,
         deltarota = 18 * Math.PI/180;  
-    var newbranch = false;
-    var axis_x = new THREE.Vector3( 1, 0, 0 );
     var axis_y = new THREE.Vector3( 0, 1, 0 );
-    var axis_z = new THREE.Vector3( 0, 0, 1 );
-    var zero = new THREE.Vector3( 0, 0, 0 );
     var axis_delta = new THREE.Vector3(),
       prev_startpoint = new THREE.Vector3();
 
@@ -599,10 +599,11 @@ function lindenmayerPlant(){
   scene.add(plant);       
   }
   plantInit();
+  console.log("initLindenmayerPlant() loaded."); 
 }
 
 //Pink Lizard
-function loadLizard(){
+function initLizard(){
   const fbxLoader = new FBXLoader(loadingManager);
   fbxLoader.setResourcePath("./textures/pink_lizard/");
   fbxLoader.load('./model/pink_lizard.fbx', function(lizard) {
@@ -622,25 +623,27 @@ function loadLizard(){
   lizard.rotation.set(0, 0, 0);
   scene.add(lizard);
   });
+  console.log("initLizard() loaded."); 
 }
 
-//Music
-function PlayAudio(){
-const listener = new THREE.AudioListener();
-//laod audio file 
-camera.add( listener );
-const sound = new THREE.Audio(listener);
-const audioLoader = new THREE.AudioLoader();
-audioLoader.load('./music/progfox-overcast.mp3', function(buffer){
-  sound.setBuffer( buffer );
-  sound.setLoop( true );
-  sound.setVolume( 0.5 );
-  sound.play();
-});
+//Music Player
+function initPlayAudio(){
+  const listener = new THREE.AudioListener();
+  //laod audio file 
+  camera.add( listener );
+  const sound = new THREE.Audio(listener);
+  const audioLoader = new THREE.AudioLoader();
+  audioLoader.load('./music/progfox-overcast.mp3', function(buffer){
+    sound.setBuffer( buffer );
+    sound.setLoop( true );
+    sound.setVolume( 0.5 );
+    sound.play();
+  });
+  console.log("initPlayAudio() loaded."); 
 }
 
 //Base Ground Model
-function loadBaseGroundModel(){
+function initBaseGroundModel(){
   const fbxLoader = new FBXLoader(loadingManager);
     fbxLoader.setResourcePath("./textures/base/");
     fbxLoader.load('./model/chimney_canopy_base.fbx', function(chimneyCanopyBase) {
@@ -659,10 +662,11 @@ function loadBaseGroundModel(){
     dirLight.target = chimneyCanopyBase;
     scene.add(chimneyCanopyBase);
   });
+  console.log("initBaseGroundModel() loaded."); 
 }
 
 //Dat GUI
-function renderGui()
+function initGui()
 {
   const gui = new GUI();
 
@@ -719,6 +723,8 @@ function renderGui()
   {
       intensity = col.fireflyIntensity;
   });
+
+  console.log("initGui() loaded."); 
 }
 
 //Animate
