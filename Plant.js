@@ -5,8 +5,7 @@ import {OrbitControls} from './build/OrbitControls.js';
 import {FBXLoader} from './build/FBXLoader.js';
 import {EffectComposer} from './build/EffectComposer.js';
 import {RenderPass} from './build/RenderPass.js';
-import {NURBSCurve} from './build/NURBSCurve.js';
-import { PointerLockControls } from "./build/PointerLockControls.js";
+import {UnrealBloomPass} from './build/UnrealBloomPass.js';
 
 //==================================
 //=======Lindenmayer Plant==========
@@ -24,27 +23,18 @@ var backgroundColour;
 
 let plane;
 
-//shaders
+//Shaders
 let vertexShader, fragmentShader, uniforms, leavesMaterial;
-//deltaTime
+
+//Fireflies
+const pLights = []
+let pLight;
+
+//Delta Time
 const clock = new THREE.Clock();
 
-//FPC
-//Forward or backward variable declaration
-let moveForward = false;
-let moveBackword = false;
-let moveLeft = false;
-let moveRight = false;
-
-
-var down = false;
-
-//Definition of movement speed and direction of movement
-const velocity = new THREE.Vector3(); //=0,0,0
-const direction = new THREE.Vector3();
-
-const color = new THREE.Color();
-let prevTime = performance.now();
+//Loading Screen 
+const loadingManager = new THREE.LoadingManager();
 
 //create the scene
 scene = new THREE.Scene();
@@ -53,10 +43,9 @@ ratio = window.innerWidth/window.innerHeight;
 //for parameters see https://threejs.org/docs/#api/cameras/PerspectiveCamera
 camera = new THREE.PerspectiveCamera(45, ratio, 0.1, 1000);
 //set the camera position
-camera.position.set(0,10,50);
+camera.position.set(0,50,50);
 // and the direction
 camera.lookAt(0,0,0);
-const raycaster = new THREE.Raycaster();
 
 //Create the webgl renderer
 renderer = new THREE.WebGLRenderer();
@@ -71,18 +60,21 @@ document.body.appendChild(renderer.domElement);
 
 //Effect Composer
 const composer = new EffectComposer(renderer);
+
+//Onlu add passes after render pass has been added first
 const renderPass = new RenderPass(scene, camera);
 composer.addPass(renderPass);
 
+const bloomPass = new UnrealBloomPass( new THREE.Vector2( window.innerWidth, window.innerHeight ), 0.5, 0.4, 0.85 );
+composer.addPass(bloomPass);
+
 //Controls
-//var controls = new OrbitControls(camera, renderer.domElement );
-const controls = new PointerLockControls(camera, document.body);//renderer.domElement);
-window.addEventListener("click", ()=> {
-  controls.lock();
-});
+var controls = new OrbitControls(camera, renderer.domElement);
 
 //========DEBUG===========
+initLoadingScreen();
 initLights();
+initFireFlies();
 loadSkybox();
 initGrassShader();
 initGrassPlane();
@@ -94,19 +86,55 @@ animate();
 //is placed at the bottom of code for get grass shader working. 
 //Edit: I fixed it be declaring shader variables and splitting your code into initGrassShader() and initGrassPlane() at the top of the document;
 //========================
-
 //Event Listeners
+//========================
+
+//Window Resize
 window.addEventListener('resize', onWindowResize);
+//Audio
 window.addEventListener('click', () => {PlayAudio()}, {once: true});
+//Loading Screen
+const dynamicLoadscreen = document.querySelector(".progress-bar-container");
+dynamicLoadscreen.addEventListener("mousemove", (e) => {
+  dynamicLoadscreen.style.backgroundPositionX = -e.offsetX * 0.05 + "px";
+  dynamicLoadscreen.style.backgroundPositionY = -e.offsetY * 0.05 + "px";
+});
+//========================
 
 //Handle window resize
 function onWindowResize() 
 {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
-
   renderer.setSize(window.innerWidth, window.innerHeight);
-  controls.handleResize();
+}
+
+//Loading Screen
+function initLoadingScreen(){
+
+  //Description disabled while loading screen is active
+  const descriptionContainer = document.getElementById("info");
+  descriptionContainer.style.display = "none";
+
+  const progressBar = document.getElementById('progress-bar');
+  loadingManager.onProgress = function(url, loaded, total)
+  {
+    progressBar.value = (loaded / total) * 100;
+    console.log(`Started loading: ${url}`);
+  }
+
+  const progressBarContainer = document.querySelector(".progress-bar-container");
+  loadingManager.onLoad = function(){
+    //When loaded disable loading screen and enable description
+    descriptionContainer.style.display = "true";
+    progressBarContainer.style.opacity = "0";
+    setTimeout(callback, 3000); //fade-out animation 3sec, meaning this has to be 3000 
+  }
+  //completely remove loading screen after fading out animation
+  //so you can access orbit controls
+  var callback = function() {
+    progressBarContainer.style.display = "none";
+  }
 }
 
 //Lighting
@@ -117,6 +145,72 @@ function initLights(){
   dirLight = new THREE.DirectionalLight(dirLightColour, dirLightInten);
   dirLight.position.set(0, 500, 500);
   scene.add(dirLight);
+}
+
+function initFireFlies()
+{
+  function getPointLight(color){
+
+    const light = new THREE.PointLight(color, 4, 15.0);
+  
+    //light ball
+    const geo = new THREE.SphereGeometry(0.05, 30, 30);
+    const mat = new THREE.MeshBasicMaterial({color});
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.add(light);
+  
+    const circle = new THREE.Object3D();
+    circle.position.x = (20 * Math.random()) - 10;
+    circle.position.y = (20 * Math.random()) - 10;
+    circle.position.z = (20 * Math.random()) - 10;
+    const radius = 0.5;
+    mesh.position.x = radius;
+    mesh.position.y = radius;
+    mesh.position.z = radius;
+    circle.rotation.x = THREE.MathUtils.degToRad(90);
+    circle.rotation.y = Math.random() * Math.PI * 2;
+    circle.add(mesh)
+  
+    const glowMat = new THREE.MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity: 0.15
+      });
+  
+      const glowMesh = new THREE.Mesh(geo, glowMat);
+      glowMesh.scale.multiplyScalar(1.5);
+      const glowMesh2 = new THREE.Mesh(geo, glowMat);
+      glowMesh2.scale.multiplyScalar(2.5);
+      const glowMesh3 = new THREE.Mesh(geo, glowMat);
+      glowMesh3.scale.multiplyScalar(4);
+      const glowMesh4 = new THREE.Mesh(geo, glowMat);
+      glowMesh4.scale.multiplyScalar(6);
+  
+      mesh.add(glowMesh);
+      mesh.add(glowMesh2);
+      mesh.add(glowMesh3);
+      mesh.add(glowMesh4);
+  
+    const rate = Math.random() * 0.1; //add speed variable
+    function update(){
+        circle.rotation.z += rate;
+    }
+  
+    return{
+        obj: circle,
+        update,
+    }
+  }
+  
+  //make them the same colour, so just one colour
+  //also you probably don't need an array
+  const colors = [0xFF0000, 0x00FF00, 0x0000FF, 0xFFFF00, 0xFF00FF, 0x00FFFF];
+  
+  for (let i = 0; i < colors.length; i += 1) {
+    pLight = getPointLight(colors[i])
+    scene.add(pLight.obj);
+    pLights.push(pLight);
+  }
 }
 
 //Skybox
@@ -382,7 +476,7 @@ function lindenmayerPlant(){
 
 //Pink Lizard
 function loadLizard(){
-  const fbxLoader = new FBXLoader();
+  const fbxLoader = new FBXLoader(loadingManager);
   fbxLoader.setResourcePath("./textures/pink_lizard/");
   fbxLoader.load('./model/pink_lizard.fbx', function(lizard) {
 
@@ -420,25 +514,24 @@ audioLoader.load('./music/progfox-overcast.mp3', function(buffer){
 
 //Base Ground Model
 function loadBaseGroundModel(){
+  const fbxLoader = new FBXLoader(loadingManager);
+    fbxLoader.setResourcePath("./textures/base/");
+    fbxLoader.load('./model/chimney_canopy_base.fbx', function(chimneyCanopyBase) {
 
-      const fbxLoader = new FBXLoader();
-      fbxLoader.setResourcePath("./textures/base/");
-      fbxLoader.load('./model/chimney_canopy_base.fbx', function(chimneyCanopyBase) {
+    chimneyCanopyBase.traverse(function(child){
+        if (child.isMesh) 
+        {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      } 
+    );
 
-      chimneyCanopyBase.traverse(function(child){
-          if (child.isMesh) 
-          {
-            child.castShadow = true;
-            child.receiveShadow = true;
-          }
-        } 
-      );
-
-      chimneyCanopyBase.userData.name = "Chimney Canopy Base";
-      chimneyCanopyBase.scale.setScalar(0.04);
-      dirLight.target = chimneyCanopyBase;
-      scene.add(chimneyCanopyBase);
-    });
+    chimneyCanopyBase.userData.name = "Chimney Canopy Base";
+    chimneyCanopyBase.scale.setScalar(0.04);
+    dirLight.target = chimneyCanopyBase;
+    scene.add(chimneyCanopyBase);
+  });
 }
 
 //Dat GUI
@@ -491,123 +584,23 @@ function renderGui()
   //colourFolder.add(mesh.rotation, "z", 0, Math.PI * 2, 0.001).name("Regenerate");
 }
 
-//FPC Camera movement
-//const raycaster = new THREE.Raycaster();
-
-function onPointerMove( event ){
-   // console.log("clicked");
-    const pointer = new THREE.Vector2();
-    pointer.x = ( camera.position.x / window.innerWidth ) * 2 - 1; //event.clientX
-    pointer.y = -( camera.position.y / window.innerHeight ) * 2 + 1;
-    console.log(pointer.x)
-    console.log(pointer.y);
-
-    raycaster.setFromCamera(pointer, camera);
-    const intersects = raycaster.intersectObjects( scene.children, false );
-    // const intersects1 = raycaster.intersectObjects( plane, false );
-    // raycaster.layers.set( 1 ); 
-    //plane.layers.enable( 1 );
-    if (intersects.length > 0){
-       intersects[0].object.material.color.set(0xff0000);
-       console.log("hit");
-    }
-    else {
-        console.log(" not hit");
-    }
-    
-}
-window.addEventListener( 'mousedown', onPointerMove, false);
-
-var arrow;
-
-// -- Keyboard controls --
-const onKeyDown = (e) => {
-  switch(e.code) {
-      case "KeyW":
-          moveForward = true;
-          break;
-      case "KeyA":
-          moveLeft = true;
-          break;
-      case "KeyS":
-      moveBackword = true;
-          break;
-      case "KeyD":
-      moveRight = true;
-          break;
-  }
-};
-
-const onKeyUp = (e) => {
-  switch(e.code) {
-      case "KeyW":
-          moveForward = false;
-          break;
-      case "KeyA":
-          moveLeft = false;
-          break;
-      case "KeyS":
-      moveBackword = false;
-          break;
-      case "KeyD":
-      moveRight = false;
-          break;
-  }
-};
-
-function FPCanimate(){
-    //FPS 
-    const time = performance.now();
-
-    // forward and backward decisions
-    direction.z = Number(moveForward) - Number(moveBackword); //cast two variable to 1 to 0
-    direction.x = Number(moveRight) - Number(moveLeft);
-  
-    // When the pointer turns ON
-    if(controls.isLocked){
-      
-      const delta = (time - prevTime) / 1000;
-  
-      raycaster.setFromCamera( new THREE.Vector2(), camera );  
-      scene.remove ( arrow );
-      arrow = new THREE.ArrowHelper(raycaster.ray.direction, raycaster.ray.origin, 0.25, 0x000000 );
-      scene.add( arrow );
-      //Decay 
-      velocity.z -= velocity.z * 5.0 * delta;
-      velocity.x -= velocity.x * 5.0 * delta;
-  
-      if(moveForward || moveBackword){
-          velocity.z -= direction.z * 200 * delta; //change movement speed here
-      }
-      if(moveRight || moveLeft){
-          velocity.x -= direction.x * 200 * delta; //change movement speed here
-      }
-      
-      controls.moveForward(-velocity.z * delta);
-      controls.moveRight(-velocity.x * delta);
-    } 
-    
-    prevTime = time;
-}
-
-document.addEventListener("keydown", onKeyDown);
-document.addEventListener("keyup", onKeyUp);
-
 //Animate
 function animate(){
   requestAnimationFrame(animate);
   render();
+
+  //Fireflies movement
+  pLights.forEach( l => l.update());
   //grass shader animation
   // Hand a time variable to vertex shader for wind displacement.
 	leavesMaterial.uniforms.time.value = clock.getElapsedTime();
   leavesMaterial.uniformsNeedUpdate = true;
 
-  //let increment = 0.001;
+  let increment = 0.001;
+
+  //re-enable this after fireflies full implementation
   //scene.rotation.y += increment;
-  //controls.update();
-  
-  FPCanimate();
-  renderer.render(scene, camera);
+  controls.update();
 
 }
 
