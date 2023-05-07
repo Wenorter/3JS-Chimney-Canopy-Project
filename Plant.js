@@ -22,6 +22,7 @@ var plantFirstColour, plantSecondColour, plantThirdColour;
 var backgroundColour;
 
 var fireflyColorHex = new THREE.Color( 0x33ff33 );
+var intensity = 1;
 var rate = Math.random() * 0.005 + 0.005;
 
 //fireflys variable 
@@ -390,7 +391,7 @@ function loadLizard(){
 // Fireflies
 function getPointLight(){
 
-  var light = new THREE.PointLight(fireflyColorHex, 1, 15.0);
+  var light = new THREE.PointLight(fireflyColorHex, intensity, 15.0);
 
   //light ball
   const geo = new THREE.SphereGeometry(0.05, 30, 30);
@@ -433,6 +434,7 @@ function getPointLight(){
   function update(){
       circle.rotation.z += rate;
       light.color = fireflyColorHex;
+      light.intensity = intensity;
       mat.color = fireflyColorHex;
       glowMat.color = fireflyColorHex;
   }
@@ -504,6 +506,7 @@ function renderGui()
     plantThirdColour: 0xffffff, //white
     fireflyColor: 0x33ff33,
     fireflySpeed: 0.0005,
+    fireflyIntensity: 1
   }
 
   let colourFolder = gui.addFolder("Scene Colour Management");
@@ -529,13 +532,20 @@ function renderGui()
     dirLight.intensity = col.dirLightInten;
   })
 
-  gui.addColor(col, 'fireflyColor').name("Firefly Color").onChange(() => {
+  let fireflyFolder = gui.addFolder("Fireflies");
+
+  fireflyFolder.addColor(col, 'fireflyColor').name("Color").onChange(() => {
     fireflyColorHex.setHex(col.fireflyColor);
   });
 
-  gui.add(col, "fireflySpeed", 0.0005, 0.05, 0.0005).name("Firefly Speed").onChange(() =>
+  fireflyFolder.add(col, "fireflySpeed", 0.0005, 0.05, 0.0005).name("Speed").onChange(() =>
   {
       rate = col.fireflySpeed;
+  });
+
+  fireflyFolder.add(col, "fireflyIntensity", 0, 5, 1).name("Intensity").onChange(() =>
+  {
+      intensity = col.fireflyIntensity;
   });
 ;
   //colourFolder.addColor(col, "ambLightColour").name("Ambient Light").onChange(() => 
