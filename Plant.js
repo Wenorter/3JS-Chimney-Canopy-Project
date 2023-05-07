@@ -75,12 +75,17 @@ window.addEventListener("click", ()=> {
 //Effect Composer
 const composer = new EffectComposer(renderer);
 
-//Onlu add passes after render pass has been added first
+//Only add passes after render pass has been added first
 const renderPass = new RenderPass(scene, camera);
 composer.addPass(renderPass);
 
 const bloomPass = new UnrealBloomPass( new THREE.Vector2( window.innerWidth, window.innerHeight ), 0.5, 0.4, 0.85 );
 composer.addPass(bloomPass);
+
+//loading textures for terrain
+const loader = new THREE.TextureLoader;
+const terrainTexture = loader.load('/Image/terrainTexture.jpg');
+
 
 //========DEBUG===========
 initLoadingScreen();
@@ -572,13 +577,17 @@ function loadBaseGroundModel(){
 
 function terrain()
 {
-  const geometry = new THREE.PlaneBufferGeometry(300, 300, 64, 64);
+  const geometry = new THREE.PlaneBufferGeometry(200, 200, 64, 64);
   const material = new THREE.MeshStandardMaterial({
-    color: 'green'
-  });
+    color: 'green',
+    DoubleSide : true,
+    map: terrainTexture,
+    displacementMap: terrainTexture,
+    displacementScale: 2
+  })
   const terrainPlane = new THREE.Mesh(geometry, material);
   scene.add(terrainPlane);
-  terrainPlane.rotation.x = '1';
+  terrainPlane.rotation.x = 300;
 
 }
 //Dat GUI
