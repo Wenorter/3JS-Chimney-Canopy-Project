@@ -388,13 +388,13 @@ function loadLizard(){
 }
 
 // Fireflies
-function getPointLight(color){
+function getPointLight(){
 
-  var light = new THREE.PointLight(color, 1, 15.0);
+  var light = new THREE.PointLight(fireflyColorHex, 1, 15.0);
 
   //light ball
   const geo = new THREE.SphereGeometry(0.05, 30, 30);
-  var mat = new THREE.MeshBasicMaterial({color});
+  var mat = new THREE.MeshBasicMaterial({color: fireflyColorHex});
   const mesh = new THREE.Mesh(geo, mat);
   mesh.add(light);
 
@@ -411,7 +411,7 @@ function getPointLight(color){
   circle.add(mesh)
 
   var glowMat = new THREE.MeshBasicMaterial({
-      color,
+      color: fireflyColorHex,
       transparent: true,
       opacity: 0.15
     });
@@ -432,6 +432,9 @@ function getPointLight(color){
 
   function update(){
       circle.rotation.z += rate;
+      light.color = fireflyColorHex;
+      mat.color = fireflyColorHex;
+      glowMat.color = fireflyColorHex;
   }
 
   return{
@@ -441,7 +444,7 @@ function getPointLight(color){
 }
 
 for(let i = 0; i< 10; i+= 1){
-  pLight = getPointLight(fireflyColorHex)
+  pLight = getPointLight()
   scene.add(pLight.obj);
   pLights.push(pLight);
 }
