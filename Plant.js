@@ -75,11 +75,7 @@ const renderPass = new RenderPass(scene, camera);
 composer.addPass(renderPass);
 
 //Controls
-//var controls = new OrbitControls(camera, renderer.domElement );
-const controls = new PointerLockControls(camera, document.body);//renderer.domElement);
-window.addEventListener("click", ()=> {
-  controls.lock();
-});
+var controls = new OrbitControls(camera, renderer.domElement );
 
 //========DEBUG===========
 initLights();
@@ -98,6 +94,7 @@ animate();
 //Event Listeners
 window.addEventListener('resize', onWindowResize);
 window.addEventListener('click', () => {PlayAudio()}, {once: true});
+window.addEventListener('mousedown', onDocumentMouseDown);
 
 //Handle window resize
 function onWindowResize() 
@@ -491,108 +488,26 @@ function renderGui()
   //colourFolder.add(mesh.rotation, "z", 0, Math.PI * 2, 0.001).name("Regenerate");
 }
 
-//FPC Camera movement
-//const raycaster = new THREE.Raycaster();
+//raycaster 
+function onDocumentMouseDown(event)
+{
+  var mouse = new THREE.Vector2();
+  mouse.x = (event.clientX/renderer.domElement.clientWidth) * 2-1;
+  mouse.y = -(event.clientY/renderer.domElement.clientHeight) * 2+1;
 
-function onPointerMove( event ){
-   // console.log("clicked");
-    const pointer = new THREE.Vector2();
-    pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1; //event.clientX
-    pointer.y = -( event.clientY / window.innerHeight ) * 2 + 1;
-    console.log(pointer.x)
-    console.log(pointer.y);
+  //var raycaster = new THREE.RayCaster();
+  raycaster.setFromCamera(mouse, camera);
+  var intersects = raycaster.intersectObjects(scene.children, false);
 
-    raycaster.setFromCamera(pointer, camera);
-    const intersects = raycaster.intersectObjects( scene.children, false );
-    // const intersects1 = raycaster.intersectObjects( plane, false );
-    // raycaster.layers.set( 1 ); 
-    //plane.layers.enable( 1 );
-    if (intersects.length > 0){
-       intersects[0].object.material.color.set(0xff0000);
-       console.log("hit");
-    }
-    else {
-        console.log(" not hit");
-    }
-    
-}
-window.addEventListener( 'mousedown', onPointerMove, false);
-
-var arrow;
-
-// -- Keyboard controls --
-const onKeyDown = (e) => {
-  switch(e.code) {
-      case "KeyW":
-          moveForward = true;
-          break;
-      case "KeyA":
-          moveLeft = true;
-          break;
-      case "KeyS":
-      moveBackword = true;
-          break;
-      case "KeyD":
-      moveRight = true;
-          break;
+  if(intersects.length>0)
+  {
+    console.log("hit!");
   }
-};
-
-const onKeyUp = (e) => {
-  switch(e.code) {
-      case "KeyW":
-          moveForward = false;
-          break;
-      case "KeyA":
-          moveLeft = false;
-          break;
-      case "KeyS":
-      moveBackword = false;
-          break;
-      case "KeyD":
-      moveRight = false;
-          break;
+  else
+  {
+    console.log("not hit");
   }
-};
-
-function FPCanimate(){
-    //FPS 
-    const time = performance.now();
-
-    // forward and backward decisions
-    direction.z = Number(moveForward) - Number(moveBackword); //cast two variable to 1 to 0
-    direction.x = Number(moveRight) - Number(moveLeft);
-  
-    // When the pointer turns ON
-    if(controls.isLocked){
-      
-      const delta = (time - prevTime) / 1000;
-  
-      raycaster.setFromCamera( new THREE.Vector2(), camera );  
-      scene.remove ( arrow );
-      arrow = new THREE.ArrowHelper(raycaster.ray.direction, raycaster.ray.origin, 0.25, 0x000000 );
-      scene.add( arrow );
-      //Decay 
-      velocity.z -= velocity.z * 5.0 * delta;
-      velocity.x -= velocity.x * 5.0 * delta;
-  
-      if(moveForward || moveBackword){
-          velocity.z -= direction.z * 200 * delta; //change movement speed here
-      }
-      if(moveRight || moveLeft){
-          velocity.x -= direction.x * 200 * delta; //change movement speed here
-      }
-      
-      controls.moveForward(-velocity.z * delta);
-      controls.moveRight(-velocity.x * delta);
-    } 
-    
-    prevTime = time;
 }
-
-document.addEventListener("keydown", onKeyDown);
-document.addEventListener("keyup", onKeyUp);
-
 //Animate
 function animate(){
   requestAnimationFrame(animate);
@@ -602,11 +517,10 @@ function animate(){
 	leavesMaterial.uniforms.time.value = clock.getElapsedTime();
   leavesMaterial.uniformsNeedUpdate = true;
 
-  //let increment = 0.001;
-  //scene.rotation.y += increment;
-  //controls.update();
+  let increment = 0.001;
+  scene.rotation.y += increment;
+  controls.update();
   
-  FPCanimate();
   renderer.render(scene, camera);
 
 }
