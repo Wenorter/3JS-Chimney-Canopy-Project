@@ -92,6 +92,7 @@ initGrassPlane();
 lindenmayerPlant();
 loadBaseGroundModel();
 loadLizard();
+terrain();
 renderGui();
 animate(); 
 //is placed at the bottom of code for get grass shader working. 
@@ -123,7 +124,7 @@ function onPointerMove(event){
 //========================
 //Event Listeners
 //========================
-
+window.addEventListener('mousedown', onPointerMove);
 //Window Resize
 window.addEventListener('resize', onWindowResize);
 //Audio
@@ -569,6 +570,17 @@ function loadBaseGroundModel(){
   });
 }
 
+function terrain()
+{
+  const geometry = new THREE.PlaneBufferGeometry(300, 300, 64, 64);
+  const material = new THREE.MeshStandardMaterial({
+    color: 'green'
+  });
+  const terrainPlane = new THREE.Mesh(geometry, material);
+  scene.add(terrainPlane);
+  terrainPlane.rotation.x = '1';
+
+}
 //Dat GUI
 function renderGui()
 {
@@ -627,6 +639,11 @@ function renderGui()
   {
       intensity = col.fireflyIntensity;
   });
+
+  //let terrainFolder = gui.addFolder("Terrain management");
+
+ // terrainFolder.add(rotation, 'x');
+ //gui.add(terrainPlane.rotation, 'x');
 }
 
 //Animate
