@@ -21,6 +21,14 @@ var dirLight, dirLightColour,dirLightInten;
 var plantFirstColour, plantSecondColour, plantThirdColour;
 var backgroundColour;
 
+var fireflyColorHex = new THREE.Color( 0x33ff33 );
+var intensity = 1;
+var rate = Math.random() * 0.005 + 0.005;
+
+//fireflys variable 
+let pLight;
+const pLights = [];
+
 let plane;
 
 //Shaders
@@ -497,6 +505,69 @@ function loadLizard(){
   });
 }
 
+// Fireflies
+function getPointLight(){
+
+  var light = new THREE.PointLight(fireflyColorHex, intensity, 15.0);
+
+  //light ball
+  const geo = new THREE.SphereGeometry(0.05, 30, 30);
+  var mat = new THREE.MeshBasicMaterial({color: fireflyColorHex});
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.add(light);
+
+  const circle = new THREE.Object3D();
+  circle.position.x = (25 * Math.random()) - 12.5;
+  circle.position.y = (5 * Math.random()) + 10;
+  circle.position.z = (25 * Math.random()) - 12.5;
+  const radius = 5;
+  mesh.position.x = radius;
+  mesh.position.y = radius;
+  mesh.position.z = radius;
+  circle.rotation.x = THREE.MathUtils.degToRad(90);
+  circle.rotation.y = Math.random() * Math.PI * 2;
+  circle.add(mesh)
+
+  var glowMat = new THREE.MeshBasicMaterial({
+      color: fireflyColorHex,
+      transparent: true,
+      opacity: 0.15
+    });
+
+    const glowMesh = new THREE.Mesh(geo, glowMat);
+    glowMesh.scale.multiplyScalar(1.5);
+    const glowMesh2 = new THREE.Mesh(geo, glowMat);
+    glowMesh2.scale.multiplyScalar(2.5);
+    const glowMesh3 = new THREE.Mesh(geo, glowMat);
+    glowMesh3.scale.multiplyScalar(4);
+    const glowMesh4 = new THREE.Mesh(geo, glowMat);
+    glowMesh4.scale.multiplyScalar(6);
+
+    mesh.add(glowMesh);
+    mesh.add(glowMesh2);
+    mesh.add(glowMesh3);
+    mesh.add(glowMesh4);
+
+  function update(){
+      circle.rotation.z += rate;
+      light.color = fireflyColorHex;
+      light.intensity = intensity;
+      mat.color = fireflyColorHex;
+      glowMat.color = fireflyColorHex;
+  }
+
+  return{
+      obj: circle,
+      update,
+  }
+}
+
+for(let i = 0; i< 10; i+= 1){
+  pLight = getPointLight()
+  scene.add(pLight.obj);
+  pLights.push(pLight);
+}
+
 //Music
 function PlayAudio(){
 const listener = new THREE.AudioListener();
@@ -548,7 +619,10 @@ function renderGui()
     dirLightInten: 0.05,
     plantFirstColour: 0xffffff, //white
     plantSecondColour: 0xffffff, //white
-    plantThirdColour: 0xffffff //white
+    plantThirdColour: 0xffffff, //white
+    fireflyColor: 0x33ff33,
+    fireflySpeed: 0.0005,
+    fireflyIntensity: 1
   }
 
   let colourFolder = gui.addFolder("Scene Colour Management");
@@ -573,6 +647,23 @@ function renderGui()
   {
     dirLight.intensity = col.dirLightInten;
   })
+
+  let fireflyFolder = gui.addFolder("Fireflies");
+
+  fireflyFolder.addColor(col, 'fireflyColor').name("Color").onChange(() => {
+    fireflyColorHex.setHex(col.fireflyColor);
+  });
+
+  fireflyFolder.add(col, "fireflySpeed", 0.0005, 0.05, 0.0005).name("Speed").onChange(() =>
+  {
+      rate = col.fireflySpeed;
+  });
+
+  fireflyFolder.add(col, "fireflyIntensity", 0, 5, 1).name("Intensity").onChange(() =>
+  {
+      intensity = col.fireflyIntensity;
+  });
+;
   //colourFolder.addColor(col, "ambLightColour").name("Ambient Light").onChange(() => 
   //{
     //ambLight.color.set(col.ambLightColour);
@@ -596,6 +687,9 @@ function animate(){
 	leavesMaterial.uniforms.time.value = clock.getElapsedTime();
   leavesMaterial.uniformsNeedUpdate = true;
 
+  //firefly animation
+  pLights.forEach( l => l.update());
+
   let increment = 0.001;
 
   //re-enable this after fireflies full implementation
@@ -608,5 +702,19 @@ function render()
 {
     composer.render(scene,camera);
 }
+
+//this fucntion is called when the window is resized
+var MyResize = function ( )
+{
+var width = window.innerWidth;
+var height = window.innerHeight;
+renderer.setSize(width,height);
+camera.aspect = width/height;
+camera.updateProjectionMatrix();
+renderer.render(scene,camera);
+};
+
+//link the resize of the window to the update of the camera
+window.addEventListener( 'resize', MyResize);
 
 
