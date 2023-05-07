@@ -440,7 +440,7 @@ function getPointLight(color){
   }
 }
 
-for(let i = 0; i<7; i+= 1){
+for(let i = 0; i< 10; i+= 1){
   pLight = getPointLight(fireflyColorHex)
   scene.add(pLight.obj);
   pLights.push(pLight);
@@ -499,7 +499,8 @@ function renderGui()
     plantFirstColour: 0xffffff, //white
     plantSecondColour: 0xffffff, //white
     plantThirdColour: 0xffffff, //white
-    fireflyColor: 0x33ff33
+    fireflyColor: 0x33ff33,
+    fireflySpeed: 0.0005,
   }
 
   let colourFolder = gui.addFolder("Scene Colour Management");
@@ -526,8 +527,14 @@ function renderGui()
   })
 
   gui.addColor(col, 'fireflyColor').name("Firefly Color").onChange(() => {
-    fireflyColorHex.setHex.setHex(col.fireflyColor);
+    fireflyColorHex.setHex(col.fireflyColor);
   });
+
+  gui.add(col, "fireflySpeed", 0.0005, 0.05, 0.0005).name("Firefly Speed").onChange(() =>
+  {
+      rate = col.fireflySpeed;
+  });
+;
   //colourFolder.addColor(col, "ambLightColour").name("Ambient Light").onChange(() => 
   //{
     //ambLight.color.set(col.ambLightColour);
