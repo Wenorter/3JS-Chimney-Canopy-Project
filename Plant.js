@@ -41,6 +41,13 @@ let camera = new THREE.PerspectiveCamera(45, ratio, 0.1, 1000);
 camera.position.set(0,10,50);
 // and the direction
 camera.lookAt(0,0,0);
+
+//Fog
+scene.fog = new THREE.FogExp2();
+scene.fog.color = new THREE.Color(0xca465c);
+scene.fog.density = 0.002;
+
+//Raycaster
 const raycaster = new THREE.Raycaster();
 
 //Webgl Renderer
@@ -75,7 +82,7 @@ const renderPass = new RenderPass(scene, camera);
 composer.addPass(renderPass);
 
 const bloomPass = new UnrealBloomPass( new THREE.Vector2( window.innerWidth, window.innerHeight ), 0.5, 0.4, 0.85 );
-composer.addPass(bloomPass);
+//composer.addPass(bloomPass);
 
 //========DEBUG===========
 try {
@@ -89,8 +96,10 @@ try {
   initGrassShader();
   initGrassPlane();
   initLindenmayerPlant();
-  initBaseGroundModel();
   initLizard();
+  initBaseGround();
+  initSuperstructure();
+  initClawRockTerrain();
   initGui();
   animate(); 
 } 
@@ -626,24 +635,8 @@ function initLizard(){
   console.log("initLizard() loaded."); 
 }
 
-//Music Player
-function initPlayAudio(){
-  const listener = new THREE.AudioListener();
-  //laod audio file 
-  camera.add( listener );
-  const sound = new THREE.Audio(listener);
-  const audioLoader = new THREE.AudioLoader();
-  audioLoader.load('./music/progfox-overcast.mp3', function(buffer){
-    sound.setBuffer( buffer );
-    sound.setLoop( true );
-    sound.setVolume( 0.5 );
-    sound.play();
-  });
-  console.log("initPlayAudio() loaded."); 
-}
-
 //Base Ground Model
-function initBaseGroundModel(){
+function initBaseGround(){
   const fbxLoader = new FBXLoader(loadingManager);
     fbxLoader.setResourcePath("./textures/base/");
     fbxLoader.load('./model/chimney_canopy_base.fbx', function(chimneyCanopyBase) {
@@ -665,6 +658,66 @@ function initBaseGroundModel(){
   console.log("initBaseGroundModel() loaded."); 
 }
 
+function initSuperstructure(){
+  const fbxLoader = new FBXLoader(loadingManager);
+    fbxLoader.load('./model/superstructure.fbx', function(superstructure) {
+
+      superstructure.traverse(function(child){
+        if (child.isMesh) 
+        {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      } 
+    );
+
+    superstructure.userData.name = "5P Superstructure";
+    superstructure.position.set(500, 0, -700);
+    superstructure.scale.setScalar(10);
+    scene.add(superstructure);
+  });
+  console.log("initSuperstructure() loaded."); 
+}
+
+//Claw Rock Terrain
+function initClawRockTerrain(){
+  const fbxLoader = new FBXLoader(loadingManager);
+  fbxLoader.setResourcePath("./textures/claw_rock/");
+  fbxLoader.load('./model/claw_rock.fbx', function(clawRockTerrain) {
+
+    clawRockTerrain.traverse(function(child){
+      if (child.isMesh) 
+      {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    } 
+  );
+
+    clawRockTerrain.userData.name = "Claw Rock Terrain";
+    clawRockTerrain.scale.setScalar(0.3);
+    clawRockTerrain.position.set(0, 0, 0);
+    scene.add(clawRockTerrain);
+  });
+  console.log("initClawRockTerrain() loaded."); 
+}
+
+//Music Player
+function initPlayAudio(){
+  const listener = new THREE.AudioListener();
+  //laod audio file 
+  camera.add( listener );
+  const sound = new THREE.Audio(listener);
+  const audioLoader = new THREE.AudioLoader();
+  audioLoader.load('./music/progfox-overcast.mp3', function(buffer){
+    sound.setBuffer( buffer );
+    sound.setLoop( true );
+    sound.setVolume( 0.5 );
+    sound.play();
+  });
+  console.log("initPlayAudio() loaded."); 
+}
+
 //Dat GUI
 function initGui()
 {
@@ -672,7 +725,7 @@ function initGui()
 
   //parameters for GUI
 //colour variables
-  let col = {
+  let params = {
     ambLightColour: 0xe52b50,  //dark pink - Amaranth shade
     ambLightInten: 0.05,
     dirLightColour: 0xfd8535, //orange - Coral shade
@@ -682,46 +735,56 @@ function initGui()
     plantThirdColour: 0xffffff, //white
     fireflyColor: 0x33ff33,
     fireflySpeed: 0.0005,
-    fireflyIntensity: 1
+    fireflyIntensity: 1,
+    fogColor: 0xe52b50,
+    fogDensity: 0.5
   }
 
-  let colourFolder = gui.addFolder("Scene Colour Management");
+  let colourFolder = gui.addFolder("Scene Light");
 
-  let ambLightFolder = colourFolder.addFolder("Ambient Light Control");
-  ambLightFolder.addColor(col, "ambLightColour").name("AL Colour").onChange(() => 
+  //Ambient Light Control
+  let ambLightFolder = colourFolder.addFolder("Ambient Light");
+  ambLightFolder.addColor(params, "ambLightColour").name("AL Colour").onChange(() => 
   {
-      ambLight.color.setHex(col.ambLightColour);
+      ambLight.color.setHex(params.ambLightColour);
   });
-  ambLightFolder.add(col, "ambLightInten", 0, 10, 0.005).name("AL Intensity").onChange(() =>
+  ambLightFolder.add(params, "ambLightInten", 0, 10, 0.005).name("AL Intensity").onChange(() =>
   {
-      ambLight.intensity = col.ambLightInten;
+      ambLight.intensity = params.ambLightInten;
   });
 
-  //scene colour change
-  let dirLightFolder = colourFolder.addFolder("Directional Light Control");
-  dirLightFolder.addColor(col, "dirLightColour").name("Directional Light").onChange(() => 
+  //Directional Light Control
+  let dirLightFolder = colourFolder.addFolder("Directional Light");
+  dirLightFolder.addColor(params, "dirLightColour").name("Directional Light").onChange(() => 
   {
-    dirLight.color.setHex(col.dirLightColour);
+    dirLight.color.setHex(params.dirLightColour);
   })
-  dirLightFolder.add(col, "dirLightInten", 0, 1, 0.005).name("Dir Light Intensity").onChange(() => 
+  dirLightFolder.add(params, "dirLightInten", 0, 1, 0.005).name("Dir Light Intensity").onChange(() => 
   {
-    dirLight.intensity = col.dirLightInten;
+    dirLight.intensity = params.dirLightInten;
   })
 
+  //Fog Control
+  let fogFolder = gui.addFolder("Fog Weather");
+   fogFolder.addColor(params, "fogColor").name("Fog Colour").onChange(function(){
+       scene.fog.color.set(params.fogColor);
+   });
+   fogFolder.add(params, "fogDensity", 0, 0.01, 0.001).name("Fog Density").onChange(function(){
+       scene.fog.density = params.fogDensity;
+   });
+
+  //Fireflies Control
   let fireflyFolder = gui.addFolder("Fireflies");
-
-  fireflyFolder.addColor(col, 'fireflyColor').name("Color").onChange(() => {
-    fireflyColorHex.setHex(col.fireflyColor);
+  fireflyFolder.addColor(params, 'fireflyColor').name("Color").onChange(() => {
+    fireflyColorHex.setHex(params.fireflyColor);
   });
-
-  fireflyFolder.add(col, "fireflySpeed", 0.0005, 0.05, 0.0005).name("Speed").onChange(() =>
+  fireflyFolder.add(params, "fireflySpeed", 0.0005, 0.05, 0.0005).name("Speed").onChange(() =>
   {
-      rate = col.fireflySpeed;
+      rate = params.fireflySpeed;
   });
-
-  fireflyFolder.add(col, "fireflyIntensity", 0, 5, 1).name("Intensity").onChange(() =>
+  fireflyFolder.add(params, "fireflyIntensity", 0, 5, 1).name("Intensity").onChange(() =>
   {
-      intensity = col.fireflyIntensity;
+      intensity = params.fireflyIntensity;
   });
 
   console.log("initGui() loaded."); 
