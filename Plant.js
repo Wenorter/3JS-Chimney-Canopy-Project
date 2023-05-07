@@ -74,6 +74,8 @@ const direction = new THREE.Vector3();
 const color = new THREE.Color();
 let prevTime = performance.now();
 
+var arrow;
+
 var controls = new PointerLockControls(camera, document.body);
 window.addEventListener("click", ()=> {
   controls.lock();
@@ -90,6 +92,8 @@ const bloomPass = new UnrealBloomPass( new THREE.Vector2( window.innerWidth, win
 composer.addPass(bloomPass);
 
 //========DEBUG===========
+initRaycaster();
+initKeyboardControls();
 initLoadingScreen();
 initLights();
 initFireFlies();
@@ -104,67 +108,73 @@ animate();
 //is placed at the bottom of code for get grass shader working. 
 //Edit: I fixed it be declaring shader variables and splitting your code into initGrassShader() and initGrassPlane() at the top of the document;
 
-//First Person control with Raycaster
-//FPC Camera movement
-
-function onPointerMove(event){
-   // console.log("clicked");
-    const pointer = new THREE.Vector2();
-    pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1; //event.clientX
-    pointer.y = -( event.clientY / window.innerHeight ) * 2 + 1;
-    console.log(pointer.x)
-    console.log(pointer.y);
-
-    raycaster.setFromCamera(pointer, camera);
-    const intersects = raycaster.intersectObjects( scene.children, false );
-    // const intersects1 = raycaster.intersectObjects( plane, false );
-    // raycaster.layers.set( 1 ); 
-    //plane.layers.enable( 1 );
-    if (intersects.length > 0){
-       intersects[0].object.material.color.set(0xff0000);
-       console.log("hit");
-    }
-    else {
-        console.log("not hit");
-    }
+function initRaycaster(){
+  function onPointerMove(event){
+    // console.log("clicked");
+     const pointer = new THREE.Vector2();
+     pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1; //event.clientX
+     pointer.y = -( event.clientY / window.innerHeight ) * 2 + 1;
+     console.log(pointer.x)
+     console.log(pointer.y);
+ 
+     raycaster.setFromCamera(pointer, camera);
+     const intersects = raycaster.intersectObjects( scene.children, false );
+     // const intersects1 = raycaster.intersectObjects( plane, false );
+     // raycaster.layers.set( 1 ); 
+     //plane.layers.enable( 1 );
+     if (intersects.length > 0){
+        intersects[0].object.material.color.set(0xff0000);
+        console.log("hit");
+     }
+     else {
+         console.log("not hit");
+     }
+  }
+  //event listener
+  window.addEventListener( 'mousedown', onPointerMove, false);
 }
 
-var arrow;
+function initKeyboardControls()
+{
+    // -- Keyboard controls --
+  const onKeyDown = (e) => {
+    switch(e.code) {
+        case "KeyW":
+            moveForward = true;
+            break;
+        case "KeyA":
+            moveLeft = true;
+            break;
+        case "KeyS":
+        moveBackword = true;
+            break;
+        case "KeyD":
+        moveRight = true;
+            break;
+    }
+  };
 
-// -- Keyboard controls --
-const onKeyDown = (e) => {
-  switch(e.code) {
-      case "KeyW":
-          moveForward = true;
-          break;
-      case "KeyA":
-          moveLeft = true;
-          break;
-      case "KeyS":
-      moveBackword = true;
-          break;
-      case "KeyD":
-      moveRight = true;
-          break;
-  }
-};
+  const onKeyUp = (e) => {
+    switch(e.code) {
+        case "KeyW":
+            moveForward = false;
+            break;
+        case "KeyA":
+            moveLeft = false;
+            break;
+        case "KeyS":
+        moveBackword = false;
+            break;
+        case "KeyD":
+        moveRight = false;
+            break;
+    }
+  };
 
-const onKeyUp = (e) => {
-  switch(e.code) {
-      case "KeyW":
-          moveForward = false;
-          break;
-      case "KeyA":
-          moveLeft = false;
-          break;
-      case "KeyS":
-      moveBackword = false;
-          break;
-      case "KeyD":
-      moveRight = false;
-          break;
-  }
-};
+  //First Person Control
+  document.addEventListener("keydown", onKeyDown);
+  document.addEventListener("keyup", onKeyUp);
+}
 
 function FPCanimate(){
     //FPS 
@@ -180,9 +190,9 @@ function FPCanimate(){
       const delta = (time - prevTime) / 1000;
 
       raycaster.setFromCamera( new THREE.Vector2(), camera );  
-      scene.remove ( arrow );
+      scene.remove (arrow);
       arrow = new THREE.ArrowHelper(raycaster.ray.direction, raycaster.ray.origin, 0.25, 0x000000 );
-      scene.add( arrow );
+      scene.add(arrow);
       //Decay 
       velocity.z -= velocity.z * 5.0 * delta;
       velocity.x -= velocity.x * 5.0 * delta;
@@ -201,8 +211,6 @@ function FPCanimate(){
     prevTime = time;
 }
 
-
-
 //========================
 //Event Listeners
 //========================
@@ -218,11 +226,6 @@ dynamicLoadscreen.addEventListener("mousemove", (e) => {
   dynamicLoadscreen.style.backgroundPositionX = -e.offsetX * 0.05 + "px";
   dynamicLoadscreen.style.backgroundPositionY = -e.offsetY * 0.05 + "px";
 });
-
-//Fiest Person Control
-window.addEventListener( 'mousedown', onPointerMove, false);
-document.addEventListener("keydown", onKeyDown);
-document.addEventListener("keyup", onKeyUp);
 //========================
 
 //Handle window resize
