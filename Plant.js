@@ -1,46 +1,57 @@
 
 import * as THREE from 'three';
 import {GUI} from './build/dat.gui.module.js';
-import {OrbitControls} from './build/OrbitControls.js';
 import {FBXLoader} from './build/FBXLoader.js';
+import {PointerLockControls} from "./build/PointerLockControls.js";
 import {EffectComposer} from './build/EffectComposer.js';
 import {RenderPass} from './build/RenderPass.js';
-import {NURBSCurve} from './build/NURBSCurve.js';
+import {UnrealBloomPass} from './build/UnrealBloomPass.js';
 
 //==================================
 //=======Lindenmayer Plant==========
 //==================================
 
-//defaults
-let chimneyCanopyBase;
-let scene, ratio, camera;
-let renderer;
-
+//Lighting
 var ambLight, ambLightColour, ambLightInten;
 var dirLight, dirLightColour,dirLightInten;
-var plantFirstColour, plantSecondColour, plantThirdColour;
-var backgroundColour;
 
-let plane;
-
-//shaders
+//Grass Shader
 let vertexShader, fragmentShader, uniforms, leavesMaterial;
-//deltaTime
+
+//Fireflies
+const pLights = []
+let pLight;
+var fireflyColorHex = new THREE.Color(0x33ff33);
+var intensity = 1;
+var rate = Math.random() * 0.005 + 0.005;
+
+//Delta Time
 const clock = new THREE.Clock();
 
-//create the scene
-scene = new THREE.Scene();
-ratio = window.innerWidth/window.innerHeight;
+//Loading Manager
+const loadingManager = new THREE.LoadingManager();
+
+//Scene
+let scene = new THREE.Scene();
+let ratio = window.innerWidth/window.innerHeight;
 //create the perspective camera
 //for parameters see https://threejs.org/docs/#api/cameras/PerspectiveCamera
-camera = new THREE.PerspectiveCamera(45, ratio, 0.1, 1000);
+let camera = new THREE.PerspectiveCamera(45, ratio, 0.1, 1000);
 //set the camera position
-camera.position.set(0,50,50);
+camera.position.set(0,10,50);
 // and the direction
 camera.lookAt(0,0,0);
 
-//Create the webgl renderer
-renderer = new THREE.WebGLRenderer();
+//Fog
+scene.fog = new THREE.FogExp2();
+scene.fog.color = new THREE.Color(0xca465c);
+scene.fog.density = 0.002;
+
+//Raycaster
+const raycaster = new THREE.Raycaster();
+
+//Webgl Renderer
+let renderer = new THREE.WebGLRenderer();
 renderer.antialias = true;
 renderer.precision = "highp";
 renderer.shadowMap.enabled = true;
@@ -50,40 +61,217 @@ renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth,window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
+//First Person Controls
+//Forward or backward variable declaration
+var arrow;
+let moveForward = false;
+let moveBackword = false;
+let moveLeft = false;
+let moveRight = false;
+//Definition of movement speed and direction of movement
+const velocity = new THREE.Vector3(); //=0,0,0
+const direction = new THREE.Vector3();
+let prevTime = performance.now();
+var controls = new PointerLockControls(camera, document.body);
+
 //Effect Composer
 const composer = new EffectComposer(renderer);
+
+//Onlu add passes after render pass has been added first
 const renderPass = new RenderPass(scene, camera);
 composer.addPass(renderPass);
 
-//Controls
-var controls = new OrbitControls(camera, renderer.domElement );
+const bloomPass = new UnrealBloomPass( new THREE.Vector2( window.innerWidth, window.innerHeight ), 0.5, 0.4, 0.85 );
+//composer.addPass(bloomPass);
 
 //========DEBUG===========
-initLights();
-loadSkybox();
-initGrassShader();
-initGrassPlane();
-lindenmayerPlant();
-loadBaseGroundModel();
-loadLizard();
-renderGui();
-animate(); 
-//is placed at the bottom of code for get grass shader working. 
-//Edit: I fixed it be declaring shader variables and splitting your code into initGrassShader() and initGrassPlane() at the top of the document;
+try {
+  initRaycaster();
+  initKeyboardControls();
+  initEventListeners();
+  initLoadingScreen();
+  initLights();
+  initFireFlies();
+  initSkybox();
+  initGrassShader();
+  initGrassPlane();
+  initLindenmayerPlant();
+  initLizard();
+  initBaseGround();
+  initSuperstructure();
+  initClawRockTerrain();
+  initGui();
+  animate(); 
+} 
+catch (error) {
+  console.log("Something went wrong during initialisation.");
+  console.error(error);
+}
 //========================
+//First Person Controls and Raycaster
+function initRaycaster(){
+  function onPointerMove(event){
+    // console.log("clicked");
+     const pointer = new THREE.Vector2();
+     pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1; //event.clientX
+     pointer.y = -( event.clientY / window.innerHeight ) * 2 + 1;
+     console.log(pointer.x)
+     console.log(pointer.y);
+ 
+     raycaster.setFromCamera(pointer, camera);
+     const intersects = raycaster.intersectObjects( scene.children, false );
+     // const intersects1 = raycaster.intersectObjects( plane, false );
+     // raycaster.layers.set( 1 ); 
+     //plane.layers.enable( 1 );
+     if (intersects.length > 0){
+        intersects[0].object.material.color.set(0xff0000);
+        console.log("hit");
+     }
+     else {
+         console.log("not hit");
+     }
+  }
+  //event listener
+  window.addEventListener('mousedown', onPointerMove, false);
+  console.log("initRaycaster() loaded.");
+}
+
+function initKeyboardControls()
+{
+    // -- Keyboard controls --
+  const onKeyDown = (e) => {
+    switch(e.code) {
+        case "KeyW":
+            moveForward = true;
+            break;
+        case "KeyA":
+            moveLeft = true;
+            break;
+        case "KeyS":
+        moveBackword = true;
+            break;
+        case "KeyD":
+        moveRight = true;
+            break;
+    }
+  };
+
+  const onKeyUp = (e) => {
+    switch(e.code) {
+        case "KeyW":
+            moveForward = false;
+            break;
+        case "KeyA":
+            moveLeft = false;
+            break;
+        case "KeyS":
+        moveBackword = false;
+            break;
+        case "KeyD":
+        moveRight = false;
+            break;
+    }
+  };
+
+  //First Person Control
+  document.addEventListener("keydown", onKeyDown);
+  document.addEventListener("keyup", onKeyUp);
+
+  console.log("initKeyboardControls() loaded.");
+}
+
+function FPCanimate(){
+    //FPS 
+    const time = performance.now();
+
+    // forward and backward decisions
+    direction.z = Number(moveForward) - Number(moveBackword); //cast two variable to 1 to 0
+    direction.x = Number(moveRight) - Number(moveLeft);
+
+    // When the pointer turns ON
+    if(controls.isLocked){
+
+      const delta = (time - prevTime) / 1000;
+
+      raycaster.setFromCamera( new THREE.Vector2(), camera );  
+      scene.remove (arrow);
+      arrow = new THREE.ArrowHelper(raycaster.ray.direction, raycaster.ray.origin, 0.25, 0x000000 );
+      scene.add(arrow);
+      //Decay 
+      velocity.z -= velocity.z * 5.0 * delta;
+      velocity.x -= velocity.x * 5.0 * delta;
+
+      if(moveForward || moveBackword){
+          velocity.z -= direction.z * 200 * delta; //change movement speed here
+      }
+      if(moveRight || moveLeft){
+          velocity.x -= direction.x * 200 * delta; //change movement speed here
+      }
+
+      controls.moveForward(-velocity.z * delta);
+      controls.moveRight(-velocity.x * delta);
+    } 
+
+    prevTime = time;
+}
 
 //Event Listeners
-window.addEventListener('resize', onWindowResize);
-window.addEventListener('click', () => {PlayAudio()}, {once: true});
+function initEventListeners()
+{
+  //Window Resize
+  window.addEventListener('resize', onWindowResize);
+
+  //Audio
+  window.addEventListener('click', () => {initPlayAudio()}, {once: true});
+  //Dynamic Loading Screen
+  const dynamicLoadscreen = document.querySelector(".progress-bar-container");
+  dynamicLoadscreen.addEventListener("mousemove", (e) => {
+    dynamicLoadscreen.style.backgroundPositionX = -e.offsetX * 0.05 + "px";
+    dynamicLoadscreen.style.backgroundPositionY = -e.offsetY * 0.05 + "px";
+  });
+
+  //Pointer Lock Controls
+  window.addEventListener("click", ()=> {
+    controls.lock();
+  });
+  console.log("initEventListeners() loaded.");
+}
 
 //Handle window resize
 function onWindowResize() 
 {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
-
   renderer.setSize(window.innerWidth, window.innerHeight);
-  controls.handleResize();
+}
+
+//Loading Screen
+function initLoadingScreen(){
+
+  //Description disabled while loading screen is active
+  const descriptionContainer = document.getElementById("info");
+  descriptionContainer.style.display = "none";
+
+  const progressBar = document.getElementById('progress-bar');
+  loadingManager.onProgress = function(url, loaded, total)
+  {
+    progressBar.value = (loaded / total) * 100;
+    console.log(`Started loading assets: ${url}`);
+  }
+
+  const progressBarContainer = document.querySelector(".progress-bar-container");
+  loadingManager.onLoad = function(){
+    //When loaded disable loading screen and enable description
+    descriptionContainer.style.display = "true";
+    progressBarContainer.style.opacity = "0";
+    setTimeout(callback, 4000); //fade-out animation 4sec, meaning this has to be 4000 
+  }
+  //completely remove loading screen after fading out animation
+  //so you can access orbit controls
+  var callback = function() {
+    progressBarContainer.style.display = "none";
+  }
+  console.log("initLoadingScreen() loaded.");
 }
 
 //Lighting
@@ -94,10 +282,79 @@ function initLights(){
   dirLight = new THREE.DirectionalLight(dirLightColour, dirLightInten);
   dirLight.position.set(0, 500, 500);
   scene.add(dirLight);
+  console.log("initLights() loaded.");
+}
+
+//Fireflies
+function initFireFlies()
+{
+  
+  function getPointLight(){
+
+    var light = new THREE.PointLight(fireflyColorHex, intensity, 15.0);
+
+    //light ball
+    const geo = new THREE.SphereGeometry(0.05, 30, 30);
+    var mat = new THREE.MeshBasicMaterial({color: fireflyColorHex});
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.add(light);
+
+    const circle = new THREE.Object3D();
+    circle.position.x = (25 * Math.random()) - 12.5;
+    circle.position.y = (5 * Math.random()) + 10;
+    circle.position.z = (25 * Math.random()) - 12.5;
+    const radius = 5;
+    mesh.position.x = radius;
+    mesh.position.y = radius;
+    mesh.position.z = radius;
+    circle.rotation.x = THREE.MathUtils.degToRad(90);
+    circle.rotation.y = Math.random() * Math.PI * 2;
+    circle.add(mesh)
+
+    var glowMat = new THREE.MeshBasicMaterial({
+        color: fireflyColorHex,
+        transparent: true,
+        opacity: 0.15
+      });
+
+      const glowMesh = new THREE.Mesh(geo, glowMat);
+      glowMesh.scale.multiplyScalar(1.5);
+      const glowMesh2 = new THREE.Mesh(geo, glowMat);
+      glowMesh2.scale.multiplyScalar(2.5);
+      const glowMesh3 = new THREE.Mesh(geo, glowMat);
+      glowMesh3.scale.multiplyScalar(4);
+      const glowMesh4 = new THREE.Mesh(geo, glowMat);
+      glowMesh4.scale.multiplyScalar(6);
+
+      mesh.add(glowMesh);
+      mesh.add(glowMesh2);
+      mesh.add(glowMesh3);
+      mesh.add(glowMesh4);
+
+    function update(){
+        circle.rotation.z += rate;
+        light.color = fireflyColorHex;
+        light.intensity = intensity;
+        mat.color = fireflyColorHex;
+        glowMat.color = fireflyColorHex;
+    }
+
+    return{
+        obj: circle,
+        update,
+    }
+  }
+
+  for(let i = 0; i< 10; i+= 1){
+    pLight = getPointLight()
+    scene.add(pLight.obj);
+    pLights.push(pLight);
+  }
+  console.log("initFireFlies() loaded.");
 }
 
 //Skybox
-function loadSkybox(){
+function initSkybox(){
   //adding textures 
   const cubeTextureLoader = new THREE.CubeTextureLoader();
   scene.background = cubeTextureLoader.load([
@@ -108,6 +365,7 @@ function loadSkybox(){
     './images/rwcc/front.png',
     './images/rwcc/back.png',
   ])
+  console.log("initSkybox() loaded."); 
 }
 
 //Grass Shader
@@ -166,6 +424,8 @@ function initGrassShader(){
     uniforms,
     side: THREE.DoubleSide
   });
+
+  console.log("initGrassShader() loaded."); 
 }
 
 //Grass Plane
@@ -196,11 +456,12 @@ function initGrassPlane(){
     grass.updateMatrix();
     instancedMesh.setMatrixAt(i, grass.matrix);
   }
+  console.log("initGrassPlane() loaded."); 
 }
 
 //L-System Plant
-function lindenmayerPlant(){
-  //https://codepen.io/mikkamikka/pen/DrdzVK
+function initLindenmayerPlant(){
+//Reference: https://codepen.io/mikkamikka/pen/DrdzVK
 
   function Params() {
     this.iterations = 2;
@@ -221,9 +482,6 @@ function lindenmayerPlant(){
 
   var rules = new Rules();
   var params = new Params();
-
-  var clear = {clear: function()
-    {canvas.width = canvas.width;}};
 
   function GetAxiomTree() {
     var Waxiom = rules.axiom;
@@ -254,22 +512,17 @@ function lindenmayerPlant(){
     let plantVertices = plantGeometry;
     var Wrule = GetAxiomTree();
     var n = Wrule.length;
-    var stackX = []; var stackY = [];  var stackZ = []; var stackA = [];
-    var stackV = []; var stackAxis = [];
+    var stackA = [];
+    var stackV = []; 
 
     var theta = params.theta * Math.PI / 180; 
     var scale = params.scale;
     var angle = params.angle * Math.PI / 180;
 
     var x0 = x_init; var y0 = y_init; var z0 = z_init;
-    var x; var y; var z;  
     var rota = 0, rota2 = 0,
         deltarota = 18 * Math.PI/180;  
-    var newbranch = false;
-    var axis_x = new THREE.Vector3( 1, 0, 0 );
     var axis_y = new THREE.Vector3( 0, 1, 0 );
-    var axis_z = new THREE.Vector3( 0, 0, 1 );
-    var zero = new THREE.Vector3( 0, 0, 0 );
     var axis_delta = new THREE.Vector3(),
       prev_startpoint = new THREE.Vector3();
 
@@ -355,11 +608,12 @@ function lindenmayerPlant(){
   scene.add(plant);       
   }
   plantInit();
+  console.log("initLindenmayerPlant() loaded."); 
 }
 
 //Pink Lizard
-function loadLizard(){
-  const fbxLoader = new FBXLoader();
+function initLizard(){
+  const fbxLoader = new FBXLoader(loadingManager);
   fbxLoader.setResourcePath("./textures/pink_lizard/");
   fbxLoader.load('./model/pink_lizard.fbx', function(lizard) {
 
@@ -378,114 +632,175 @@ function loadLizard(){
   lizard.rotation.set(0, 0, 0);
   scene.add(lizard);
   });
-}
-
-//Music
-function PlayAudio(){
-const listener = new THREE.AudioListener();
-//laod audio file 
-camera.add( listener );
-const sound = new THREE.Audio(listener);
-const audioLoader = new THREE.AudioLoader();
-audioLoader.load('./music/progfox-overcast.mp3', function(buffer){
-  sound.setBuffer( buffer );
-  sound.setLoop( true );
-  sound.setVolume( 0.5 );
-  sound.play();
-});
+  console.log("initLizard() loaded."); 
 }
 
 //Base Ground Model
-function loadBaseGroundModel(){
+function initBaseGround(){
+  const fbxLoader = new FBXLoader(loadingManager);
+    fbxLoader.setResourcePath("./textures/base/");
+    fbxLoader.load('./model/chimney_canopy_base.fbx', function(chimneyCanopyBase) {
 
-      const fbxLoader = new FBXLoader();
-      fbxLoader.setResourcePath("./textures/base/");
-      fbxLoader.load('./model/chimney_canopy_base.fbx', function(chimneyCanopyBase) {
+    chimneyCanopyBase.traverse(function(child){
+        if (child.isMesh) 
+        {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      } 
+    );
 
-      chimneyCanopyBase.traverse(function(child){
-          if (child.isMesh) 
-          {
-            child.castShadow = true;
-            child.receiveShadow = true;
-          }
-        } 
-      );
+    chimneyCanopyBase.userData.name = "Chimney Canopy Base";
+    chimneyCanopyBase.scale.setScalar(0.04);
+    dirLight.target = chimneyCanopyBase;
+    scene.add(chimneyCanopyBase);
+  });
+  console.log("initBaseGroundModel() loaded."); 
+}
 
-      chimneyCanopyBase.userData.name = "Chimney Canopy Base";
-      chimneyCanopyBase.scale.setScalar(0.04);
-      dirLight.target = chimneyCanopyBase;
-      scene.add(chimneyCanopyBase);
-    });
+function initSuperstructure(){
+  const fbxLoader = new FBXLoader(loadingManager);
+    fbxLoader.load('./model/superstructure.fbx', function(superstructure) {
+
+      superstructure.traverse(function(child){
+        if (child.isMesh) 
+        {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      } 
+    );
+
+    superstructure.userData.name = "5P Superstructure";
+    superstructure.position.set(500, 0, -700);
+    superstructure.scale.setScalar(10);
+    scene.add(superstructure);
+  });
+  console.log("initSuperstructure() loaded."); 
+}
+
+//Claw Rock Terrain
+function initClawRockTerrain(){
+  const fbxLoader = new FBXLoader(loadingManager);
+  fbxLoader.setResourcePath("./textures/claw_rock/");
+  fbxLoader.load('./model/claw_rock.fbx', function(clawRockTerrain) {
+
+    clawRockTerrain.traverse(function(child){
+      if (child.isMesh) 
+      {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    } 
+  );
+
+    clawRockTerrain.userData.name = "Claw Rock Terrain";
+    clawRockTerrain.scale.setScalar(0.3);
+    clawRockTerrain.position.set(0, 0, 0);
+    scene.add(clawRockTerrain);
+  });
+  console.log("initClawRockTerrain() loaded."); 
+}
+
+//Music Player
+function initPlayAudio(){
+  const listener = new THREE.AudioListener();
+  //laod audio file 
+  camera.add( listener );
+  const sound = new THREE.Audio(listener);
+  const audioLoader = new THREE.AudioLoader();
+  audioLoader.load('./music/progfox-overcast.mp3', function(buffer){
+    sound.setBuffer( buffer );
+    sound.setLoop( true );
+    sound.setVolume( 0.5 );
+    sound.play();
+  });
+  console.log("initPlayAudio() loaded."); 
 }
 
 //Dat GUI
-function renderGui()
+function initGui()
 {
   const gui = new GUI();
 
   //parameters for GUI
 //colour variables
-  let col = {
+  let params = {
     ambLightColour: 0xe52b50,  //dark pink - Amaranth shade
     ambLightInten: 0.05,
     dirLightColour: 0xfd8535, //orange - Coral shade
     dirLightInten: 0.05,
     plantFirstColour: 0xffffff, //white
     plantSecondColour: 0xffffff, //white
-    plantThirdColour: 0xffffff //white
+    plantThirdColour: 0xffffff, //white
+    fireflyColor: 0x33ff33,
+    fireflySpeed: 0.0005,
+    fireflyIntensity: 1,
+    fogColor: 0xe52b50,
+    fogDensity: 0.5
   }
 
-  let colourFolder = gui.addFolder("Scene Colour Management");
+  let colourFolder = gui.addFolder("Scene Light");
 
-  let ambLightFolder = colourFolder.addFolder("Ambient Light Control");
-  ambLightFolder.addColor(col, "ambLightColour").name("AL Colour").onChange(() => 
+  //Ambient Light Control
+  let ambLightFolder = colourFolder.addFolder("Ambient Light");
+  ambLightFolder.addColor(params, "ambLightColour").name("AL Colour").onChange(() => 
   {
-      ambLight.color.setHex(col.ambLightColour);
+      ambLight.color.setHex(params.ambLightColour);
   });
-  ambLightFolder.add(col, "ambLightInten", 0, 10, 0.005).name("AL Intensity").onChange(() =>
+  ambLightFolder.add(params, "ambLightInten", 0, 10, 0.005).name("AL Intensity").onChange(() =>
   {
-      ambLight.intensity = col.ambLightInten;
+      ambLight.intensity = params.ambLightInten;
   });
 
-  //scene colour change
-  let dirLightFolder = colourFolder.addFolder("Directional Light Control");
-  dirLightFolder.addColor(col, "dirLightColour").name("Directional Light").onChange(() => 
+  //Directional Light Control
+  let dirLightFolder = colourFolder.addFolder("Directional Light");
+  dirLightFolder.addColor(params, "dirLightColour").name("Directional Light").onChange(() => 
   {
-    dirLight.color.setHex(col.dirLightColour);
+    dirLight.color.setHex(params.dirLightColour);
   })
-  dirLightFolder.add(col, "dirLightInten", 0, 1, 0.005).name("Dir Light Intensity").onChange(() => 
+  dirLightFolder.add(params, "dirLightInten", 0, 1, 0.005).name("Dir Light Intensity").onChange(() => 
   {
-    dirLight.intensity = col.dirLightInten;
+    dirLight.intensity = params.dirLightInten;
   })
-  //colourFolder.addColor(col, "ambLightColour").name("Ambient Light").onChange(() => 
-  //{
-    //ambLight.color.set(col.ambLightColour);
-  //})
-  //colourFolder.add(col, "ambLightColour", 0, 1, 0.005).name("AL Intensity");
 
-  //colourFolder.add(mesh.rotation, "y", 0, Math.PI * 2, 0.001).name("Secondary Clour");
-  //colourFolder.add(mesh.rotation, "z", 0, Math.PI * 2, 0.001).name("Accent Colour");
-  //colourFolder.add(mesh.rotation, "z", 0, Math.PI * 2, 0.001).name("Regenerate");
+  //Fog Control
+  let fogFolder = gui.addFolder("Fog Weather");
+   fogFolder.addColor(params, "fogColor").name("Fog Colour").onChange(function(){
+       scene.fog.color.set(params.fogColor);
+   });
+   fogFolder.add(params, "fogDensity", 0, 0.01, 0.001).name("Fog Density").onChange(function(){
+       scene.fog.density = params.fogDensity;
+   });
+
+  //Fireflies Control
+  let fireflyFolder = gui.addFolder("Fireflies");
+  fireflyFolder.addColor(params, 'fireflyColor').name("Color").onChange(() => {
+    fireflyColorHex.setHex(params.fireflyColor);
+  });
+  fireflyFolder.add(params, "fireflySpeed", 0.0005, 0.05, 0.0005).name("Speed").onChange(() =>
+  {
+      rate = params.fireflySpeed;
+  });
+  fireflyFolder.add(params, "fireflyIntensity", 0, 5, 1).name("Intensity").onChange(() =>
+  {
+      intensity = params.fireflyIntensity;
+  });
+
+  console.log("initGui() loaded."); 
 }
 
 //Animate
 function animate(){
   requestAnimationFrame(animate);
-  render();
+  composer.render(scene,camera);
+  //Fireflies movement
+  pLights.forEach( l => l.update());
+
   //grass shader animation
   // Hand a time variable to vertex shader for wind displacement.
 	leavesMaterial.uniforms.time.value = clock.getElapsedTime();
   leavesMaterial.uniformsNeedUpdate = true;
-
-  let increment = 0.001;
-  scene.rotation.y += increment;
-  controls.update();
-
+  FPCanimate();
 }
-
-function render() 
-{
-    composer.render(scene,camera);
-}
-
 
