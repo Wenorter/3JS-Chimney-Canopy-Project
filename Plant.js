@@ -15,6 +15,9 @@ import {UnrealBloomPass} from './build/UnrealBloomPass.js';
 var ambLight, ambLightColour, ambLightInten;
 var dirLight, dirLightColour,dirLightInten;
 
+//Bloom
+var bloomStr = 0.5;
+
 //Grass Shader
 let vertexShader, fragmentShader, uniforms, leavesMaterial;
 
@@ -77,12 +80,17 @@ var controls = new PointerLockControls(camera, document.body);
 //Effect Composer
 const composer = new EffectComposer(renderer);
 
-//Onlu add passes after render pass has been added first
+//Only add passes after render pass has been added first
 const renderPass = new RenderPass(scene, camera);
 composer.addPass(renderPass);
 
-const bloomPass = new UnrealBloomPass( new THREE.Vector2( window.innerWidth, window.innerHeight ), 0.5, 0.4, 0.85 );
-//composer.addPass(bloomPass);
+const bloomPass = new UnrealBloomPass( 
+  new THREE.Vector2( window.innerWidth, window.innerHeight ), 
+  0.5, 
+  0.4, 
+  0.85);
+composer.addPass(bloomPass);
+bloomPass.strength = bloomStr;
 
 //========DEBUG===========
 try {
@@ -737,7 +745,8 @@ function initGui()
     fireflySpeed: 0.0005,
     fireflyIntensity: 1,
     fogColor: 0xe52b50,
-    fogDensity: 0.5
+    fogDensity: 0.5,
+    bloomStrength: 0.5
   }
 
   let colourFolder = gui.addFolder("Scene Light");
@@ -785,6 +794,12 @@ function initGui()
   fireflyFolder.add(params, "fireflyIntensity", 0, 5, 1).name("Intensity").onChange(() =>
   {
       intensity = params.fireflyIntensity;
+  });
+
+  //Bloom Control
+  gui.add(params, "bloomStrength", 0, 5, 0.5).name("Bloom Intensity").onChange(() =>
+  {
+      bloomStr = params.bloomStrength;
   });
 
   console.log("initGui() loaded."); 
