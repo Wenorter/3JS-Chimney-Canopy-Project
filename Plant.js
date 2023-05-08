@@ -15,9 +15,6 @@ import {UnrealBloomPass} from './build/UnrealBloomPass.js';
 var ambLight, ambLightColour, ambLightInten;
 var dirLight, dirLightColour,dirLightInten;
 
-//Bloom
-var bloomStr = 0.5;
-
 //Grass Shader
 let vertexShader, fragmentShader, uniforms, leavesMaterial;
 
@@ -90,7 +87,6 @@ const bloomPass = new UnrealBloomPass(
   0.4, 
   0.85);
 composer.addPass(bloomPass);
-bloomPass.strength = bloomStr;
 
 //========DEBUG===========
 try {
@@ -797,9 +793,10 @@ function initGui()
   });
 
   //Bloom Control
-  gui.add(params, "bloomStrength", 0, 5, 0.5).name("Bloom Intensity").onChange(() =>
+  let bloomFolder = gui.addFolder("Bloom");
+  bloomFolder.add(params, "bloomStrength", 0, 5, 0.5).name("Bloom Intensity").onChange(() =>
   {
-      bloomStr = params.bloomStrength;
+      bloomPass.strength = params.bloomStrength;
   });
 
   console.log("initGui() loaded."); 
