@@ -742,7 +742,9 @@ function initGui()
     fireflyIntensity: 1,
     fogColor: 0xe52b50,
     fogDensity: 0.5,
-    bloomStrength: 0.5
+    bloomStrength: 0.5,
+    bloomRadius: 0.4,
+    bloomThreshold: 0.85
   }
 
   let colourFolder = gui.addFolder("Scene Light");
@@ -787,16 +789,24 @@ function initGui()
   {
       rate = params.fireflySpeed;
   });
-  fireflyFolder.add(params, "fireflyIntensity", 0, 5, 1).name("Intensity").onChange(() =>
+  fireflyFolder.add(params, "fireflyIntensity", 0, 5, 0.1).name("Intensity").onChange(() =>
   {
       intensity = params.fireflyIntensity;
   });
 
   //Bloom Control
   let bloomFolder = gui.addFolder("Bloom");
-  bloomFolder.add(params, "bloomStrength", 0, 5, 0.5).name("Bloom Intensity").onChange(() =>
+  bloomFolder.add(params, "bloomStrength", 0, 5, 0.1).name("Strength").onChange(() =>
   {
       bloomPass.strength = params.bloomStrength;
+  });
+  bloomFolder.add(params, "bloomRadius", 0, 1, 0.1).name("Radius").onChange(() =>
+  {
+      bloomPass.radius = params.bloomRadius;
+  });
+  bloomFolder.add(params, "bloomThreshold", 0, 1, 0.1).name("Threshold").onChange(() =>
+  {
+      bloomPass.threshold = params.bloomThreshold;
   });
 
   console.log("initGui() loaded."); 
