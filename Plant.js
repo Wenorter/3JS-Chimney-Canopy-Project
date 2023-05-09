@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import {GUI} from './build/dat.gui.module.js';
 import {FBXLoader} from './build/FBXLoader.js';
+import {RGBELoader} from './build/RGBELoader.js';
 import {PointerLockControls} from "./build/PointerLockControls.js";
 import {EffectComposer} from './build/EffectComposer.js';
 import {RenderPass} from './build/RenderPass.js';
@@ -99,7 +100,8 @@ try {
   initSkybox();
   initGrassShader();
   initGrassPlane();
-  initGlassDome();
+  //initGlassDome();
+  initNewGlassDome();
   initLindenmayerPlant();
   initLizard();
   initBaseGround();
@@ -479,6 +481,37 @@ function initGlassDome() {
   glassContainer.position.set(0, 15, 0); // position the glass container in the scene
   scene.add(glassContainer);
 }
+
+//New glass dome
+function initNewGlassDome(){
+  //create environment map
+  const envMapLoader = new THREE.TextureLoader();
+
+  const envTexture = envMapLoader.load(
+    "textures/Sunset.jpg"
+  )
+
+  envTexture.mapping = THREE.EquirectangularReflectionMapping;
+
+  //create glass material and geometry
+  const newGlassMat = new THREE.MeshPhysicalMaterial({
+    color: 0xffffff,
+    transmission: 1.0,
+    roughness: 0.0,
+    ior: 2,
+    thickness: 0.3,
+    specularIntensity: 1.0,
+    clearcoat: 1,
+    envMap: envTexture
+  });
+  const newGlassGeo = new THREE.BoxGeometry(46, 35, 42);
+
+  //create glass mesh and add mesh to scene
+  const newGlassContainer = new THREE.Mesh(newGlassGeo, newGlassMat);
+  newGlassContainer.position.set(0, 15, 0);
+  scene.add(newGlassContainer);
+}
+
 
 //L-System Plant
 function initLindenmayerPlant(){
