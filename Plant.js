@@ -2,7 +2,6 @@
 import * as THREE from 'three';
 import {GUI} from './build/dat.gui.module.js';
 import {FBXLoader} from './build/FBXLoader.js';
-import {RGBELoader} from './build/RGBELoader.js';
 import {PointerLockControls} from "./build/PointerLockControls.js";
 import {EffectComposer} from './build/EffectComposer.js';
 import {RenderPass} from './build/RenderPass.js';
@@ -20,8 +19,8 @@ var dirLight, dirLightColour,dirLightInten;
 let vertexShader, fragmentShader, uniforms, leavesMaterial;
 
 //Fireflies
-const pLights = []
 let pLight;
+const pLights = [];
 var fireflyColorHex = new THREE.Color(0x33ff33);
 var intensity = 1;
 var rate = Math.random() * 0.005 + 0.005;
@@ -111,8 +110,7 @@ try {
   initSkybox();
   initGrassShader();
   initGrassPlane();
-  //initGlassDome();
-  initNewGlassDome();
+  initGlassDome();
   initLindenmayerPlant();
   initLizard();
   initBaseGround();
@@ -129,7 +127,6 @@ catch (error) {
 //First Person Controls and Raycaster
 function initRaycaster(){
   function onPointerMove(event){
-    // console.log("clicked");
     const pointer = new THREE.Vector2();
     pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1; //event.clientX
     pointer.y = -( event.clientY / window.innerHeight ) * 2 + 1;
@@ -493,23 +490,7 @@ function initGrassPlane(){
 }
 
 //Glass Dome around base, lizard and plant
-function initGlassDome() {
-  // create the glass container cube
-  const glassGeometry = new THREE.BoxGeometry(46, 35, 42);
-  const glassMaterial = new THREE.MeshPhysicalMaterial({
-    color: 0xffffff,
-    opacity: 0.4,
-    transparent: true,
-    roughness: 0.2,
-    metalness: 0.5,
-  });
-  const glassContainer = new THREE.Mesh(glassGeometry, glassMaterial);
-  glassContainer.position.set(0, 15, 0); // position the glass container in the scene
-  scene.add(glassContainer);
-}
-
-//New glass dome
-function initNewGlassDome(){
+function initGlassDome(){
   //create environment map
   const envMapLoader = new THREE.TextureLoader();
 
@@ -528,6 +509,7 @@ function initNewGlassDome(){
     thickness: 0.3,
     specularIntensity: 1.0,
     clearcoat: 1,
+    depthWrite: false,
     envMap: envTexture
   });
   const newGlassGeo = new THREE.BoxGeometry(46, 35, 42);
@@ -537,7 +519,6 @@ function initNewGlassDome(){
   newGlassContainer.position.set(0, 15, 0);
   scene.add(newGlassContainer);
 }
-
 
 //L-System Plant
 function initLindenmayerPlant(){
