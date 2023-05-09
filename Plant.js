@@ -656,6 +656,18 @@ function initLizard(){
   console.log("initLizard() loaded."); 
 }
 
+//transparent mesh for lizard
+const boxGeometry = new THREE.BoxGeometry(20,7,15);
+const material = new THREE.MeshBasicMaterial({
+  transparent: true,
+  opacity: 0,
+  color: 'red'
+});
+const lizardMesh = new THREE.Mesh(boxGeometry, material);
+lizardMesh.position.set(-10,5,-11);
+scene.add(lizardMesh);
+
+
 //Base Ground Model
 function initBaseGround(){
   const fbxLoader = new FBXLoader(loadingManager);
