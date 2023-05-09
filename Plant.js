@@ -128,13 +128,32 @@ function initRaycaster(){
      // const intersects1 = raycaster.intersectObjects( plane, false );
      // raycaster.layers.set( 1 ); 
      //plane.layers.enable( 1 );
-     if (intersects.length > 0){
+    /* if (intersects.length > 0){
         intersects[0].object.material.color.set(0xff0000);
         console.log("hit");
      }
      else {
          console.log("not hit");
-     }
+     }*/
+     if (intersects.length > 0)
+     {
+       if (intersects[0].object.name == "plant")
+          {
+          console.log("plant");
+          }
+   else if (intersects[0].object.name == "lizard")
+         {
+   console.log("lizard");
+         }
+         else
+         {
+       console.log("hit random");
+         }
+    }
+    else
+    {
+      console.log("not hit");
+    }
   }
   //event listener
   window.addEventListener('mousedown', onPointerMove, false);
@@ -626,6 +645,7 @@ function initLindenmayerPlant(){
   var plant = new THREE.Line(geometry, material);
   plant.position.set(8,7,-6);
   plant.scale.setScalar(0.05);
+  plant.name = "plant";
   scene.add(plant);       
   }
   plantInit();
@@ -665,6 +685,7 @@ const material = new THREE.MeshBasicMaterial({
 });
 const lizardMesh = new THREE.Mesh(boxGeometry, material);
 lizardMesh.position.set(-10,5,-11);
+lizardMesh.name = "lizard";
 scene.add(lizardMesh);
 
 
