@@ -99,10 +99,11 @@ try {
   initSkybox();
   initGrassShader();
   initGrassPlane();
+  initGlassDome();
   initLindenmayerPlant();
   initLizard();
   initBaseGround();
-  initSuperstructure();
+  initMegastructure();
   initClawRockTerrain();
   initGui();
   animate(); 
@@ -463,6 +464,22 @@ function initGrassPlane(){
   console.log("initGrassPlane() loaded."); 
 }
 
+//Glass Dome around base, lizard and plant
+function initGlassDome() {
+  // create the glass container cube
+  const glassGeometry = new THREE.BoxGeometry(46, 35, 42);
+  const glassMaterial = new THREE.MeshPhysicalMaterial({
+    color: 0xffffff,
+    opacity: 0.4,
+    transparent: true,
+    roughness: 0.2,
+    metalness: 0.5,
+  });
+  const glassContainer = new THREE.Mesh(glassGeometry, glassMaterial);
+  glassContainer.position.set(0, 15, 0); // position the glass container in the scene
+  scene.add(glassContainer);
+}
+
 //L-System Plant
 function initLindenmayerPlant(){
 //Reference: https://codepen.io/mikkamikka/pen/DrdzVK
@@ -662,11 +679,11 @@ function initBaseGround(){
   console.log("initBaseGroundModel() loaded."); 
 }
 
-function initSuperstructure(){
+function initMegastructure(){
   const fbxLoader = new FBXLoader(loadingManager);
-    fbxLoader.load('./model/superstructure.fbx', function(superstructure) {
+    fbxLoader.load('./model/megastructure.fbx', function(megastructure) {
 
-      superstructure.traverse(function(child){
+      megastructure.traverse(function(child){
         if (child.isMesh) 
         {
           child.castShadow = true;
@@ -675,12 +692,12 @@ function initSuperstructure(){
       } 
     );
 
-    superstructure.userData.name = "5P Superstructure";
-    superstructure.position.set(500, 0, -700);
-    superstructure.scale.setScalar(10);
-    scene.add(superstructure);
+    megastructure.userData.name = "5P Megastructure";
+    megastructure.position.set(500, 0, -700);
+    megastructure.scale.setScalar(10);
+    scene.add(megastructure);
   });
-  console.log("initSuperstructure() loaded."); 
+  console.log("initMegastructure() loaded."); 
 }
 
 //Claw Rock Terrain
@@ -727,7 +744,7 @@ function initGui()
 {
   const gui = new GUI();
 
-  //parameters for GUI
+//parameters for GUI
 //colour variables
   let params = {
     ambLightColour: 0xe52b50,  //dark pink - Amaranth shade
