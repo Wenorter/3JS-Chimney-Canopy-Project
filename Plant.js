@@ -325,7 +325,11 @@ function initFireFlies()
 
     //light ball
     const geo = new THREE.SphereGeometry(0.05, 30, 30);
-    var mat = new THREE.MeshBasicMaterial({color: fireflyColorHex});
+    var mat = new THREE.MeshBasicMaterial({
+      color: fireflyColorHex,
+      transparent: true,
+      opacity: 1
+    });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.add(light);
 
