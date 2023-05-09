@@ -26,6 +26,9 @@ var fireflyColorHex = new THREE.Color(0x33ff33);
 var intensity = 1;
 var rate = Math.random() * 0.005 + 0.005;
 
+//Animation mixer
+let mixer;
+
 //Delta Time
 const clock = new THREE.Clock();
 
@@ -42,6 +45,14 @@ let camera = new THREE.PerspectiveCamera(45, ratio, 0.1, 1000);
 camera.position.set(0,10,50);
 // and the direction
 camera.lookAt(0,0,0);
+
+//Audio Loader 
+const listener = new THREE.AudioListener();
+//load audio file 
+camera.add(listener);
+const music = new THREE.Audio(listener);
+const lizardSound = new THREE.Audio(listener);
+const audioLoader = new THREE.AudioLoader();
 
 //Fog
 scene.fog = new THREE.FogExp2();
@@ -119,38 +130,34 @@ catch (error) {
 function initRaycaster(){
   function onPointerMove(event){
     // console.log("clicked");
-     const pointer = new THREE.Vector2();
-     pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1; //event.clientX
-     pointer.y = -( event.clientY / window.innerHeight ) * 2 + 1;
-     console.log(pointer.x)
-     console.log(pointer.y);
- 
-     raycaster.setFromCamera(pointer, camera);
-     const intersects = raycaster.intersectObjects( scene.children, false );
-     // const intersects1 = raycaster.intersectObjects( plane, false );
-     // raycaster.layers.set( 1 ); 
-     //plane.layers.enable( 1 );
-    /* if (intersects.length > 0){
-        intersects[0].object.material.color.set(0xff0000);
-        console.log("hit");
-     }
-     else {
-         console.log("not hit");
-     }*/
-     if (intersects.length > 0)
-     {
-       if (intersects[0].object.name == "plant")
-          {
-          console.log("plant");
-          }
-   else if (intersects[0].object.name == "lizard")
-         {
-   console.log("lizard");
-         }
-         else
-         {
-       console.log("hit random");
-         }
+    const pointer = new THREE.Vector2();
+    pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1; //event.clientX
+    pointer.y = -( event.clientY / window.innerHeight ) * 2 + 1;
+    console.log(pointer.x)
+    console.log(pointer.y);
+
+    raycaster.setFromCamera(pointer, camera);
+    const intersects = raycaster.intersectObjects( scene.children, false );
+    if (intersects.length > 0)
+    {
+      if (intersects[0].object.name == "plant")
+      {
+        console.log("plant");
+      }
+      else if (intersects[0].object.name == "lizard")
+      {
+        console.log("lizard");
+        audioLoader.load('./music/lizard_sound.mp3', function(buffer){
+          lizardSound.setBuffer(buffer);
+          lizardSound.setLoop(false);
+          lizardSound.setVolume(2);
+          lizardSound.play();
+        });
+      }
+      else
+      {
+        console.log("hit random");
+      }
     }
     else
     {
@@ -248,7 +255,7 @@ function initEventListeners()
   window.addEventListener('resize', onWindowResize);
 
   //Audio
-  window.addEventListener('click', () => {initPlayAudio()}, {once: true});
+  window.addEventListener('click', () => {(initPlayMusic())}, {once: true});
   //Dynamic Loading Screen
   const dynamicLoadscreen = document.querySelector(".progress-bar-container");
   dynamicLoadscreen.addEventListener("mousemove", (e) => {
@@ -690,13 +697,15 @@ function initLizard(){
   const fbxLoader = new FBXLoader(loadingManager);
   fbxLoader.setResourcePath("./textures/pink_lizard/");
   fbxLoader.load('./model/pink_lizard.fbx', function(lizard) {
-
     lizard.traverse(function(child){
       if (child.isMesh) 
       {
         child.castShadow = true;
         child.receiveShadow = true;
       }
+      mixer = new THREE.AnimationMixer(lizard);
+      const idle = mixer.clipAction(lizard.animations[0]); //grabs first animation from list
+      idle.play();
     } 
   );
 
@@ -706,21 +715,22 @@ function initLizard(){
   lizard.rotation.set(0, 0, 0);
   scene.add(lizard);
   });
+
+
+  //collision box for lizard
+  const boxGeometry = new THREE.BoxGeometry(20,7,15);
+  const material = new THREE.MeshBasicMaterial({
+    transparent: true,
+    opacity: 0,
+    color: 'pink'
+  });
+
+  const lizardBox = new THREE.Mesh(boxGeometry, material);
+  lizardBox.position.set(-10,5,-11);
+  lizardBox.name = "lizard";
+  scene.add(lizardBox);
   console.log("initLizard() loaded."); 
 }
-
-//transparent mesh for lizard
-const boxGeometry = new THREE.BoxGeometry(20,7,15);
-const material = new THREE.MeshBasicMaterial({
-  transparent: true,
-  opacity: 0,
-  color: 'red'
-});
-const lizardMesh = new THREE.Mesh(boxGeometry, material);
-lizardMesh.position.set(-10,5,-11);
-lizardMesh.name = "lizard";
-scene.add(lizardMesh);
-
 
 //Base Ground Model
 function initBaseGround(){
@@ -790,19 +800,14 @@ function initClawRockTerrain(){
 }
 
 //Music Player
-function initPlayAudio(){
-  const listener = new THREE.AudioListener();
-  //laod audio file 
-  camera.add( listener );
-  const sound = new THREE.Audio(listener);
-  const audioLoader = new THREE.AudioLoader();
+function initPlayMusic(){
   audioLoader.load('./music/progfox-overcast.mp3', function(buffer){
-    sound.setBuffer( buffer );
-    sound.setLoop( true );
-    sound.setVolume( 0.5 );
-    sound.play();
+    music.setBuffer(buffer);
+    music.setLoop(true);
+    music.setVolume(0.5);
+    music.play();
   });
-  console.log("initPlayAudio() loaded."); 
+  console.log("initPlayMusic() loaded."); 
 }
 
 //Dat GUI
@@ -901,8 +906,9 @@ function animate(){
   composer.render(scene,camera);
   //Fireflies movement
   pLights.forEach( l => l.update());
-
-  //grass shader animation
+  //Lizard idle animation
+  if (mixer) mixer.update(clock.getElapsedTime() * 0.00025);
+  //grass shader animationw
   // Hand a time variable to vertex shader for wind displacement.
 	leavesMaterial.uniforms.time.value = clock.getElapsedTime();
   leavesMaterial.uniformsNeedUpdate = true;
