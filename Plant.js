@@ -6,27 +6,59 @@ import {PointerLockControls} from "./build/PointerLockControls.js";
 import {EffectComposer} from './build/EffectComposer.js';
 import {RenderPass} from './build/RenderPass.js';
 import {UnrealBloomPass} from './build/UnrealBloomPass.js';
-
+import  './Detector.js';
 //==================================
 //=======Lindenmayer Plant==========
 //==================================
 
+console.log(Detector);
+if(!Detector.webgl) Detector.addGetwebGLMessage();
+
 //Lighting
 var ambLight, ambLightColour, ambLightInten;
 var dirLight, dirLightColour,dirLightInten;
-
 //Grass Shader
 let vertexShader, fragmentShader, uniforms, leavesMaterial;
-
+//sky 
+var mouseX, mouseY, mesh;
+var start_time = Date.now();
+var popupOpen = false, popup;
 //Fireflies
+const pLights = []
 let pLight;
-const pLights = [];
+ //Scene
+ let scene = new THREE.Scene();
+ let ratio = window.innerWidth/window.innerHeight;
+
+ //create the perspective camera
+ //for parameters see https://threejs.org/docs/#api/cameras/PerspectiveCamera
+ let camera = new THREE.PerspectiveCamera(45, ratio, 0.1, 1000);
+ //set the camera position
+ camera.position.set(0,30,50);
+ // and the direction
+ camera.lookAt(0,0,0);
+
+ //Fog
+ scene.fog = new THREE.FogExp2();
+ scene.fog.color = new THREE.Color(0xca465c);
+ scene.fog.density = 0.002;
+
+ //Raycaster
+ const raycaster = new THREE.Raycaster();
+
+ //Webgl Renderer
+ let renderer = new THREE.WebGLRenderer();
+ renderer.antialias = true;
+ renderer.precision = "highp";
+ renderer.shadowMap.enabled = true;
+ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+ renderer.powerPreference = "high-performance";
+ renderer.setPixelRatio(window.devicePixelRatio);
+ renderer.setSize(window.innerWidth,window.innerHeight);
+ document.body.appendChild(renderer.domElement);
 var fireflyColorHex = new THREE.Color(0x33ff33);
 var intensity = 1;
 var rate = Math.random() * 0.005 + 0.005;
-
-//Animation mixer
-let mixer;
 
 //Delta Time
 const clock = new THREE.Clock();
@@ -34,43 +66,8 @@ const clock = new THREE.Clock();
 //Loading Manager
 const loadingManager = new THREE.LoadingManager();
 
-//Scene
-let scene = new THREE.Scene();
-let ratio = window.innerWidth/window.innerHeight;
-//create the perspective camera
-//for parameters see https://threejs.org/docs/#api/cameras/PerspectiveCamera
-let camera = new THREE.PerspectiveCamera(45, ratio, 0.1, 1000);
-//set the camera position
-camera.position.set(0,10,50);
-// and the direction
-camera.lookAt(0,0,0);
+init();
 
-//Audio Loader 
-const listener = new THREE.AudioListener();
-//load audio file 
-camera.add(listener);
-const music = new THREE.Audio(listener);
-const lizardSound = new THREE.Audio(listener);
-const audioLoader = new THREE.AudioLoader();
-
-//Fog
-scene.fog = new THREE.FogExp2();
-scene.fog.color = new THREE.Color(0xca465c);
-scene.fog.density = 0.002;
-
-//Raycaster
-const raycaster = new THREE.Raycaster();
-
-//Webgl Renderer
-let renderer = new THREE.WebGLRenderer();
-renderer.antialias = true;
-renderer.precision = "highp";
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.powerPreference = "high-performance";
-renderer.setPixelRatio(window.devicePixelRatio);
-renderer.setSize(window.innerWidth,window.innerHeight);
-document.body.appendChild(renderer.domElement);
 
 //First Person Controls
 //Forward or backward variable declaration
@@ -88,19 +85,16 @@ var controls = new PointerLockControls(camera, document.body);
 //Effect Composer
 const composer = new EffectComposer(renderer);
 
-//Only add passes after render pass has been added first
+//Onlu add passes after render pass has been added first
 const renderPass = new RenderPass(scene, camera);
 composer.addPass(renderPass);
 
-const bloomPass = new UnrealBloomPass( 
-  new THREE.Vector2( window.innerWidth, window.innerHeight ), 
-  0.5, 
-  0.4, 
-  0.85);
-composer.addPass(bloomPass);
+const bloomPass = new UnrealBloomPass( new THREE.Vector2( window.innerWidth, window.innerHeight ), 0.5, 0.4, 0.85 );
+//composer.addPass(bloomPass);
 
 //========DEBUG===========
 try {
+  
   initRaycaster();
   initKeyboardControls();
   initEventListeners();
@@ -110,11 +104,10 @@ try {
   initSkybox();
   initGrassShader();
   initGrassPlane();
-  initGlassDome();
   initLindenmayerPlant();
   initLizard();
   initBaseGround();
-  initMegastructure();
+  initSuperstructure();
   initClawRockTerrain();
   initGui();
   animate(); 
@@ -123,47 +116,132 @@ catch (error) {
   console.log("Something went wrong during initialisation.");
   console.error(error);
 }
+function init() {
+
+  // camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 1, 3000);
+  // camera.position.z = 6000;
+  var textureLoader = new THREE.TextureLoader();
+  var texture = textureLoader.load('./image/Cloud/cloud1.png');
+  texture.magFilter = THREE.LinearMipMapLinearFilter;
+  texture.minFilter = THREE.LinearMipMapLinearFilter;
+  var fog = new THREE.Fog(0x4584b4, -0, 3000);
+
+  var material = new THREE.ShaderMaterial({
+
+      uniforms: {
+
+          "map": {
+              type: "t",
+              value: texture
+          },
+          "fogColor": {
+              type: "c",
+              value: fog.color
+          },
+          "fogNear": {
+              type: "f",
+              value: fog.near
+          },
+          "fogFar": {
+              type: "f",
+              value: fog.far
+          },
+
+      },
+      color: "000000",
+      vertexShader: document.getElementById('vs').textContent,
+      fragmentShader: document.getElementById('fs').textContent,
+      depthWrite: false,
+      depthTest: true,
+      transparent: true
+
+  });
+
+  let planeGeometry = new THREE.PlaneGeometry(5,5);
+  var geometrics = new THREE.Group();
+  for (var i = 0; i < 20000; i++) {
+      let plane = new THREE.Mesh(planeGeometry, material);
+      plane.position.x = Math.random() * 1000-500;
+      plane.position.y = -150;
+      plane.position.z = Math.random() * 1000-500;
+      plane.rotation.y = Math.random() * 10;
+      plane.rotation.z = Math.random() * Math.PI;
+      plane.scale.x = plane.scale.y = Math.random() * Math.random() * 15 + 5;
+      geometrics.add(plane);
+    }
+    scene.add(geometrics);
+  document.addEventListener('mousemove', onDocumentMouseMove, false);
+  window.addEventListener('resize', onWindowResize, false);
+
+}
+function onDocumentMouseMove(event) {
+  var windowHalfX = window.innerWidth / 2;
+  var windowHalfY = window.innerHeight / 2;
+  mouseX = (event.clientX - windowHalfX) * 0.25;
+  mouseY = (event.clientY - windowHalfY) * 0.15;
+}
 //========================
 //First Person Controls and Raycaster
 function initRaycaster(){
   function onPointerMove(event){
-    const pointer = new THREE.Vector2();
-    pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1; //event.clientX
-    pointer.y = -( event.clientY / window.innerHeight ) * 2 + 1;
-    console.log(pointer.x)
-    console.log(pointer.y);
-
-    raycaster.setFromCamera(pointer, camera);
-    const intersects = raycaster.intersectObjects( scene.children, false );
-    if (intersects.length > 0)
-    {
-      if (intersects[0].object.name == "plant")
-      {
-        console.log("plant");
-      }
-      else if (intersects[0].object.name == "lizard")
-      {
-        console.log("lizard");
-        audioLoader.load('./music/lizard_sound.mp3', function(buffer){
-          lizardSound.setBuffer(buffer);
-          lizardSound.setLoop(false);
-          lizardSound.setVolume(2);
-          lizardSound.play();
-        });
-      }
-      else
-      {
-        console.log("hit random");
-      }
+    // console.log("clicked");
+    
+     const pointer = new THREE.Vector2();
+     console.log(event);
+     pointer.x = 0; //event.clientX
+     pointer.y = 0;
+     console.log(pointer.x)
+     console.log(pointer.y);
+    if(popupOpen) {
+      console.log("aaaaaaaaaaaaaaaaaaaa-?");
+      document.body.removeChild(popup);
+      popupOpen = false;
     }
-    else
-    {
-      console.log("not hit");
-    }
+     raycaster.setFromCamera(pointer, camera);
+     console.log(scene);
+     const intersects = raycaster.intersectObjects( scene.children, true );
+     // const intersects1 = raycaster.intersectObjects( plane, false );
+     // raycaster.layers.set( 1 ); 
+     //plane.layers.enable( 1 );
+     console.log(intersects[0]);
+     if (intersects.length > 0){
+      if(intersects[0].object.type == "Line") {
+        intersects[0].object.material.color.set(0xff0000);
+        popup = createPopup("Tree");
+        popup.style.left = "80px";
+        document.body.appendChild(popup);
+        popupOpen = true;
+        console.log("hit");
+      } else if (intersects[0].object.name == "Cylinder001") {
+        popup = createPopup()
+      } else if (intersects[0].object.name == "PinkLizard_MadeBy_Drywink") {
+        // popup = createPopup("PinkLizard_MadeBy_Drywink");
+        // popup.style.left = "150px";
+        // document.body.appendChild(popup);
+        // popupOpen = true;
+      }
+     }
+     else {
+         console.log("not hit");
+     }
   }
   //event listener
   window.addEventListener('mousedown', onPointerMove, false);
   console.log("initRaycaster() loaded.");
+}
+
+function createPopup(text) {
+  const popup = document.createElement('div');
+  popup.textContent = text;
+  popup.style.backgroundColor = '#f2f2f2';
+  popup.style.color = 'black';
+  popup.style.bottom = '0px';
+  popup.style.left = '0px';
+  popup.style.position = 'absolute';
+  popup.style.transform = 'translate(-50%, -50%)';
+  popup.style.padding = '20px';
+  popup.style.border = '1px solid black';
+  return popup;
 }
 
 function initKeyboardControls()
@@ -252,7 +330,7 @@ function initEventListeners()
   window.addEventListener('resize', onWindowResize);
 
   //Audio
-  window.addEventListener('click', () => {(initPlayMusic())}, {once: true});
+  window.addEventListener('click', () => {initPlayAudio()}, {once: true});
   //Dynamic Loading Screen
   const dynamicLoadscreen = document.querySelector(".progress-bar-container");
   dynamicLoadscreen.addEventListener("mousemove", (e) => {
@@ -325,11 +403,7 @@ function initFireFlies()
 
     //light ball
     const geo = new THREE.SphereGeometry(0.05, 30, 30);
-    var mat = new THREE.MeshBasicMaterial({
-      color: fireflyColorHex,
-      transparent: true,
-      opacity: 1
-    });
+    var mat = new THREE.MeshBasicMaterial({color: fireflyColorHex});
     const mesh = new THREE.Mesh(geo, mat);
     mesh.add(light);
 
@@ -493,37 +567,6 @@ function initGrassPlane(){
   console.log("initGrassPlane() loaded."); 
 }
 
-//Glass Dome around base, lizard and plant
-function initGlassDome(){
-  //create environment map
-  const envMapLoader = new THREE.TextureLoader();
-
-  const envTexture = envMapLoader.load(
-    "textures/Sunset.jpg"
-  )
-
-  envTexture.mapping = THREE.EquirectangularReflectionMapping;
-
-  //create glass material and geometry
-  const newGlassMat = new THREE.MeshPhysicalMaterial({
-    color: 0xffffff,
-    transmission: 1.0,
-    roughness: 0.0,
-    ior: 2,
-    thickness: 0.3,
-    specularIntensity: 1.0,
-    clearcoat: 1,
-    depthWrite: false,
-    envMap: envTexture
-  });
-  const newGlassGeo = new THREE.BoxGeometry(46, 35, 42);
-
-  //create glass mesh and add mesh to scene
-  const newGlassContainer = new THREE.Mesh(newGlassGeo, newGlassMat);
-  newGlassContainer.position.set(0, 15, 0);
-  scene.add(newGlassContainer);
-}
-
 //L-System Plant
 function initLindenmayerPlant(){
 //Reference: https://codepen.io/mikkamikka/pen/DrdzVK
@@ -670,7 +713,6 @@ function initLindenmayerPlant(){
   var plant = new THREE.Line(geometry, material);
   plant.position.set(8,7,-6);
   plant.scale.setScalar(0.05);
-  plant.name = "plant";
   scene.add(plant);       
   }
   plantInit();
@@ -682,15 +724,13 @@ function initLizard(){
   const fbxLoader = new FBXLoader(loadingManager);
   fbxLoader.setResourcePath("./textures/pink_lizard/");
   fbxLoader.load('./model/pink_lizard.fbx', function(lizard) {
+
     lizard.traverse(function(child){
       if (child.isMesh) 
       {
         child.castShadow = true;
         child.receiveShadow = true;
       }
-      mixer = new THREE.AnimationMixer(lizard);
-      const idle = mixer.clipAction(lizard.animations[0]); //grabs first animation from list
-      idle.play();
     } 
   );
 
@@ -700,20 +740,6 @@ function initLizard(){
   lizard.rotation.set(0, 0, 0);
   scene.add(lizard);
   });
-
-
-  //collision box for lizard
-  const boxGeometry = new THREE.BoxGeometry(20,7,15);
-  const material = new THREE.MeshBasicMaterial({
-    transparent: true,
-    opacity: 0,
-    color: 'pink'
-  });
-
-  const lizardBox = new THREE.Mesh(boxGeometry, material);
-  lizardBox.position.set(-10,5,-11);
-  lizardBox.name = "lizard";
-  scene.add(lizardBox);
   console.log("initLizard() loaded."); 
 }
 
@@ -740,11 +766,11 @@ function initBaseGround(){
   console.log("initBaseGroundModel() loaded."); 
 }
 
-function initMegastructure(){
+function initSuperstructure(){
   const fbxLoader = new FBXLoader(loadingManager);
-    fbxLoader.load('./model/megastructure.fbx', function(megastructure) {
+    fbxLoader.load('./model/superstructure.fbx', function(superstructure) {
 
-      megastructure.traverse(function(child){
+      superstructure.traverse(function(child){
         if (child.isMesh) 
         {
           child.castShadow = true;
@@ -753,12 +779,12 @@ function initMegastructure(){
       } 
     );
 
-    megastructure.userData.name = "5P Megastructure";
-    megastructure.position.set(500, 0, -700);
-    megastructure.scale.setScalar(10);
-    scene.add(megastructure);
+    superstructure.userData.name = "5P Superstructure";
+    superstructure.position.set(500, 0, -700);
+    superstructure.scale.setScalar(10);
+    scene.add(superstructure);
   });
-  console.log("initMegastructure() loaded."); 
+  console.log("initSuperstructure() loaded."); 
 }
 
 //Claw Rock Terrain
@@ -785,14 +811,19 @@ function initClawRockTerrain(){
 }
 
 //Music Player
-function initPlayMusic(){
+function initPlayAudio(){
+  const listener = new THREE.AudioListener();
+  //laod audio file 
+  camera.add( listener );
+  const sound = new THREE.Audio(listener);
+  const audioLoader = new THREE.AudioLoader();
   audioLoader.load('./music/progfox-overcast.mp3', function(buffer){
-    music.setBuffer(buffer);
-    music.setLoop(true);
-    music.setVolume(0.5);
-    music.play();
+    sound.setBuffer( buffer );
+    sound.setLoop( true );
+    sound.setVolume( 0.5 );
+    sound.play();
   });
-  console.log("initPlayMusic() loaded."); 
+  console.log("initPlayAudio() loaded."); 
 }
 
 //Dat GUI
@@ -800,7 +831,7 @@ function initGui()
 {
   const gui = new GUI();
 
-//parameters for GUI
+  //parameters for GUI
 //colour variables
   let params = {
     ambLightColour: 0xe52b50,  //dark pink - Amaranth shade
@@ -814,10 +845,7 @@ function initGui()
     fireflySpeed: 0.0005,
     fireflyIntensity: 1,
     fogColor: 0xe52b50,
-    fogDensity: 0.5,
-    bloomStrength: 0.5,
-    bloomRadius: 0.4,
-    bloomThreshold: 0.85
+    fogDensity: 0.5
   }
 
   let colourFolder = gui.addFolder("Scene Light");
@@ -862,24 +890,9 @@ function initGui()
   {
       rate = params.fireflySpeed;
   });
-  fireflyFolder.add(params, "fireflyIntensity", 0, 5, 0.1).name("Intensity").onChange(() =>
+  fireflyFolder.add(params, "fireflyIntensity", 0, 5, 1).name("Intensity").onChange(() =>
   {
       intensity = params.fireflyIntensity;
-  });
-
-  //Bloom Control
-  let bloomFolder = gui.addFolder("Bloom");
-  bloomFolder.add(params, "bloomStrength", 0, 5, 0.1).name("Strength").onChange(() =>
-  {
-      bloomPass.strength = params.bloomStrength;
-  });
-  bloomFolder.add(params, "bloomRadius", 0, 1, 0.1).name("Radius").onChange(() =>
-  {
-      bloomPass.radius = params.bloomRadius;
-  });
-  bloomFolder.add(params, "bloomThreshold", 0, 1, 0.1).name("Threshold").onChange(() =>
-  {
-      bloomPass.threshold = params.bloomThreshold;
   });
 
   console.log("initGui() loaded."); 
@@ -888,12 +901,12 @@ function initGui()
 //Animate
 function animate(){
   requestAnimationFrame(animate);
+
   composer.render(scene,camera);
   //Fireflies movement
   pLights.forEach( l => l.update());
-  //Lizard idle animation
-  if (mixer) mixer.update(clock.getElapsedTime() * 0.00025);
-  //grass shader animationw
+
+  //grass shader animation
   // Hand a time variable to vertex shader for wind displacement.
 	leavesMaterial.uniforms.time.value = clock.getElapsedTime();
   leavesMaterial.uniformsNeedUpdate = true;
