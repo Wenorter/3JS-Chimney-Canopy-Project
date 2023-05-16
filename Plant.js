@@ -133,6 +133,11 @@ function initRaycaster(){
     console.log(pointer.x)
     console.log(pointer.y);
 
+    if(popupOpen) {
+      console.log("aaaaaaaaaaaaaaaaaaaa-?");
+      document.body.removeChild(popup);
+      popupOpen = false;
+    }
     raycaster.setFromCamera(pointer, camera);
     const intersects = raycaster.intersectObjects( scene.children, false );
     if (intersects.length > 0)
