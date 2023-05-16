@@ -139,7 +139,12 @@ function initRaycaster(){
     {
       if (intersects[0].object.name == "plant")
       {
-        console.log("plant");
+        //  intersects[0].object.material.color.set(0xff0000);
+        popup = createPopup("This is the plant made with the lindermayer system. It is made by various rules declared by our group.");
+        popup.style.left = "80px";
+        document.body.appendChild(popup);
+        popupOpen = true;
+        console.log("hit plant");
       }
       else if (intersects[0].object.name == "lizard")
       {
