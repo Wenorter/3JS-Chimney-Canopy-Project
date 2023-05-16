@@ -166,6 +166,20 @@ function initRaycaster(){
   console.log("initRaycaster() loaded.");
 }
 
+function createPopup(text) {
+  const popup = document.createElement('div');
+  popup.textContent = text;
+  popup.style.backgroundColor = '#f2f2f2';
+  popup.style.color = 'black';
+  popup.style.bottom = '0px';
+  popup.style.left = '0px';
+  popup.style.position = 'absolute';
+  popup.style.transform = 'translate(-50%, -50%)';
+  popup.style.padding = '20px';
+  popup.style.border = '1px solid black';
+  return popup;
+}
+
 function initKeyboardControls()
 {
     // -- Keyboard controls --
