@@ -14,6 +14,7 @@ import  './Detector.js';
 console.log(Detector);
 if(!Detector.webgl) Detector.addGetwebGLMessage();
 
+const lizardSound = new THREE.Audio(listener);
 //Lighting
 var ambLight, ambLightColour, ambLightInten;
 var dirLight, dirLightColour,dirLightInten;
