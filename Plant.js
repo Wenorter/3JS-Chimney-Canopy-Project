@@ -49,6 +49,7 @@ const listener = new THREE.AudioListener();
 //load audio file 
 camera.add(listener);
 const lizardSound = new THREE.Audio(listener);
+const audioLoader = new THREE.AudioLoader();
 
  //Raycaster
  const raycaster = new THREE.Raycaster();
