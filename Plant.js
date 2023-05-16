@@ -6,21 +6,57 @@ import {PointerLockControls} from "./build/PointerLockControls.js";
 import {EffectComposer} from './build/EffectComposer.js';
 import {RenderPass} from './build/RenderPass.js';
 import {UnrealBloomPass} from './build/UnrealBloomPass.js';
-
+import  './Detector.js';
 //==================================
 //=======Lindenmayer Plant==========
 //==================================
 
+console.log(Detector);
+if(!Detector.webgl) Detector.addGetwebGLMessage();
+
 //Lighting
 var ambLight, ambLightColour, ambLightInten;
 var dirLight, dirLightColour,dirLightInten;
-
 //Grass Shader
 let vertexShader, fragmentShader, uniforms, leavesMaterial;
-
+//sky 
+var mouseX, mouseY, mesh;
+var start_time = Date.now();
 //Fireflies
 let pLight;
 const pLights = [];
+ //Scene
+ let scene = new THREE.Scene();
+ let ratio = window.innerWidth/window.innerHeight;
+
+ //create the perspective camera
+ //for parameters see https://threejs.org/docs/#api/cameras/PerspectiveCamera
+ // let camera = new THREE.PerspectiveCamera(45, ratio, 0.1, 1000);
+ let camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
+   // camera.position.z = 6000;
+ //set the camera position
+ camera.position.set(0,50,50);
+ // and the direction
+ camera.lookAt(0,0,0);
+
+ //Fog
+ scene.fog = new THREE.FogExp2();
+ scene.fog.color = new THREE.Color(0xca465c);
+ scene.fog.density = 0.002;
+
+ //Raycaster
+ const raycaster = new THREE.Raycaster();
+
+ //Webgl Renderer
+ let renderer = new THREE.WebGLRenderer();
+ renderer.antialias = true;
+ renderer.precision = "highp";
+ renderer.shadowMap.enabled = true;
+ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+ renderer.powerPreference = "high-performance";
+ renderer.setPixelRatio(window.devicePixelRatio);
+ renderer.setSize(window.innerWidth,window.innerHeight);
+ document.body.appendChild(renderer.domElement);
 var fireflyColorHex = new THREE.Color(0x33ff33);
 var intensity = 1;
 var rate = Math.random() * 0.005 + 0.005;
@@ -35,16 +71,7 @@ const clock = new THREE.Clock();
 //Loading Manager
 const loadingManager = new THREE.LoadingManager();
 
-//Scene
-let scene = new THREE.Scene();
-let ratio = window.innerWidth/window.innerHeight;
-//create the perspective camera
-//for parameters see https://threejs.org/docs/#api/cameras/PerspectiveCamera
-let camera = new THREE.PerspectiveCamera(45, ratio, 0.1, 1000);
-//set the camera position
-camera.position.set(0,10,50);
-// and the direction
-camera.lookAt(0,0,0);
+init();
 
 //Audio Loader 
 const listener = new THREE.AudioListener();
@@ -58,20 +85,6 @@ const audioLoader = new THREE.AudioLoader();
 scene.fog = new THREE.FogExp2();
 scene.fog.color = new THREE.Color(0xca465c);
 scene.fog.density = 0.002;
-
-//Raycaster
-const raycaster = new THREE.Raycaster();
-
-//Webgl Renderer
-let renderer = new THREE.WebGLRenderer();
-renderer.antialias = true;
-renderer.precision = "highp";
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.powerPreference = "high-performance";
-renderer.setPixelRatio(window.devicePixelRatio);
-renderer.setSize(window.innerWidth,window.innerHeight);
-document.body.appendChild(renderer.domElement);
 
 //First Person Controls
 //Forward or backward variable declaration
@@ -102,8 +115,10 @@ composer.addPass(bloomPass);
 
 //========DEBUG===========
 try {
+  
   initRaycaster();
   initKeyboardControls();
+  initGlassDome();
   initEventListeners();
   initLoadingScreen();
   initLights();
@@ -123,6 +138,67 @@ try {
 catch (error) {
   console.log("Something went wrong during initialisation.");
   console.error(error);
+}
+function init() {
+
+  // camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 1, 3000);
+  // camera.position.z = 6000;
+  var textureLoader = new THREE.TextureLoader();
+  var texture = textureLoader.load('./image/Cloud/cloud1.png');
+  texture.magFilter = THREE.LinearMipMapLinearFilter;
+  texture.minFilter = THREE.LinearMipMapLinearFilter;
+  var fog = new THREE.Fog(0x4584b4, -0, 3000);
+
+  var material = new THREE.ShaderMaterial({
+
+      uniforms: {
+
+          "map": {
+              type: "t",
+              value: texture
+          },
+          "fogColor": {
+              type: "c",
+              value: fog.color
+          },
+          "fogNear": {
+              type: "f",
+              value: fog.near
+          },
+          "fogFar": {
+              type: "f",
+              value: fog.far
+          },
+
+      },
+      vertexShader: document.getElementById('vs').textContent,
+      fragmentShader: document.getElementById('fs').textContent,
+      depthWrite: false,
+      depthTest: true,
+      transparent: 1
+
+  });
+
+  let planeGeometry = new THREE.PlaneGeometry(5,5);
+  for (var i = 0; i < 20000; i++) {
+      let plane = new THREE.Mesh(planeGeometry, material);
+      plane.position.x = Math.random() * 1000-500;
+      plane.position.y = -150;
+      plane.position.z = Math.random() * 1000-500;
+      plane.rotation.y = Math.random() * 10;
+      plane.rotation.z = Math.random() * Math.PI;
+      plane.scale.x = plane.scale.y = Math.random() * Math.random() * 15 + 5;
+      scene.add(plane);
+    }
+  document.addEventListener('mousemove', onDocumentMouseMove, false);
+  window.addEventListener('resize', onWindowResize, false);
+
+}
+function onDocumentMouseMove(event) {
+  var windowHalfX = window.innerWidth / 2;
+  var windowHalfY = window.innerHeight / 2;
+  mouseX = (event.clientX - windowHalfX) * 0.25;
+  mouseY = (event.clientY - windowHalfY) * 0.15;
 }
 //========================
 //First Person Controls and Raycaster
@@ -314,6 +390,37 @@ function onWindowResize()
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+//Glass Dome around base, lizard and plant
+function initGlassDome(){
+  //create environment map
+  const envMapLoader = new THREE.TextureLoader();
+
+  const envTexture = envMapLoader.load(
+    "textures/Sunset.jpg"
+  )
+
+  envTexture.mapping = THREE.EquirectangularReflectionMapping;
+
+  //create glass material and geometry
+  const newGlassMat = new THREE.MeshPhysicalMaterial({
+    color: 0xffffff,
+    transmission: 1.0,
+    roughness: 0.0,
+    ior: 2,
+    thickness: 0.3,
+    specularIntensity: 1.0,
+    clearcoat: 1,
+    depthWrite: false,
+    envMap: envTexture
+  });
+  const newGlassGeo = new THREE.BoxGeometry(46, 35, 42);
+
+  //create glass mesh and add mesh to scene
+  const newGlassContainer = new THREE.Mesh(newGlassGeo, newGlassMat);
+  newGlassContainer.position.set(0, 15, 0);
+  scene.add(newGlassContainer);
 }
 
 //Loading Screen
@@ -739,6 +846,7 @@ function initLizard(){
   lizard.scale.setScalar(0.12);
   lizard.position.set(-10, 2.2, -10);
   lizard.rotation.set(0, 0, 0);
+  console.log(lizard);
   scene.add(lizard);
   });
 
@@ -929,6 +1037,7 @@ function initGui()
 //Animate
 function animate(){
   requestAnimationFrame(animate);
+
   composer.render(scene,camera);
   //Fireflies movement
   pLights.forEach( l => l.update());
