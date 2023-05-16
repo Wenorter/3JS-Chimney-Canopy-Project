@@ -148,13 +148,29 @@ function initRaycaster(){
       }
       else if (intersects[0].object.name == "lizard")
       {
-        console.log("lizard");
+       /* console.log("lizard");
+        audioLoader.load('./music/lizard_sound.mp3', function(buffer){
+          lizardSound.setBuffer(buffer);
+          lizardSound.setLoop(false);
+          lizardSound.setVolume(2);
+          lizardSound.play();
+        });*/
+        // popup = createPopup("PinkLizard_MadeBy_Drywink");
+        // popup.style.left = "150px";
+        // document.body.appendChild(popup);
+        // popupOpen = true;
+        
+        popup = createPopup("This is the Lizard model.");
+        popup.style.left = "80px";
+        document.body.appendChild(popup);
+        popupOpen = true;
         audioLoader.load('./music/lizard_sound.mp3', function(buffer){
           lizardSound.setBuffer(buffer);
           lizardSound.setLoop(false);
           lizardSound.setVolume(2);
           lizardSound.play();
         });
+        console.log("hit lizard");
       }
       else
       {
