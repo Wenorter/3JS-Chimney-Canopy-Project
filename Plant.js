@@ -98,6 +98,7 @@ try {
   
   initRaycaster();
   initKeyboardControls();
+  initGlassDome();
   initEventListeners();
   initLoadingScreen();
   initLights();
@@ -153,7 +154,7 @@ function init() {
       fragmentShader: document.getElementById('fs').textContent,
       depthWrite: false,
       depthTest: true,
-      transparent: true
+      transparent: 1
 
   });
 
@@ -314,6 +315,37 @@ function onWindowResize()
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+//Glass Dome around base, lizard and plant
+function initGlassDome(){
+  //create environment map
+  const envMapLoader = new THREE.TextureLoader();
+
+  const envTexture = envMapLoader.load(
+    "textures/Sunset.jpg"
+  )
+
+  envTexture.mapping = THREE.EquirectangularReflectionMapping;
+
+  //create glass material and geometry
+  const newGlassMat = new THREE.MeshPhysicalMaterial({
+    color: 0xffffff,
+    transmission: 1.0,
+    roughness: 0.0,
+    ior: 2,
+    thickness: 0.3,
+    specularIntensity: 1.0,
+    clearcoat: 1,
+    depthWrite: false,
+    envMap: envTexture
+  });
+  const newGlassGeo = new THREE.BoxGeometry(46, 35, 42);
+
+  //create glass mesh and add mesh to scene
+  const newGlassContainer = new THREE.Mesh(newGlassGeo, newGlassMat);
+  newGlassContainer.position.set(0, 15, 0);
+  scene.add(newGlassContainer);
 }
 
 //Loading Screen
