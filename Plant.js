@@ -25,6 +25,7 @@ var fireflyColorHex = new THREE.Color(0x33ff33);
 var intensity = 1;
 var rate = Math.random() * 0.005 + 0.005;
 
+var popupOpen = false, popup;
 //Animation mixer
 let mixer;
 
