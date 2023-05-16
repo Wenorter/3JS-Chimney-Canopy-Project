@@ -146,7 +146,7 @@ function initRaycaster(){
       if (intersects[0].object.name == "plant")
       {
         //  intersects[0].object.material.color.set(0xff0000);
-        popup = createPopup("This is the plant made with the lindermayer system. It is made by various rules declared by our group.");
+        popup = createPopup("This is a holographic plant projected with the help of Lindermayer algorithm system.");
         popup.style.left = "80px";
         document.body.appendChild(popup);
         popupOpen = true;
@@ -166,7 +166,7 @@ function initRaycaster(){
         // document.body.appendChild(popup);
         // popupOpen = true;
         
-        popup = createPopup("This is the Lizard model.");
+        popup = createPopup("This is the Pink Lizard. Pink Lizards are ferocious and curious predators.");
         popup.style.left = "80px";
         document.body.appendChild(popup);
         popupOpen = true;
