@@ -198,10 +198,11 @@ function createPopup(text) {
   popup.textContent = text;
   popup.style.backgroundColor = '#f2f2f2';
   popup.style.color = 'black';
-  popup.style.bottom = '0px';
-  popup.style.left = '0px';
+  //popup.style.bottom = '0px';
+  popup.style.top = '80%';
+  popup.style.left = '50%';
   popup.style.position = 'absolute';
-  popup.style.transform = 'translate(-50%, -50%)';
+  popup.style.transform = 'translate(100%, -50%)';
   popup.style.padding = '20px';
   popup.style.border = '1px solid black';
   return popup;
