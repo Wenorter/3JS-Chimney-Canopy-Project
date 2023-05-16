@@ -14,7 +14,7 @@ import  './Detector.js';
 console.log(Detector);
 if(!Detector.webgl) Detector.addGetwebGLMessage();
 
-const lizardSound = new THREE.Audio(listener);
+
 //Lighting
 var ambLight, ambLightColour, ambLightInten;
 var dirLight, dirLightColour,dirLightInten;
@@ -43,6 +43,12 @@ let pLight;
  scene.fog = new THREE.FogExp2();
  scene.fog.color = new THREE.Color(0xca465c);
  scene.fog.density = 0.002;
+
+ //Audio Loader 
+const listener = new THREE.AudioListener();
+//load audio file 
+camera.add(listener);
+const lizardSound = new THREE.Audio(listener);
 
  //Raycaster
  const raycaster = new THREE.Raycaster();
