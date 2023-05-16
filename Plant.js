@@ -219,6 +219,11 @@ function initRaycaster(){
         // popup.style.left = "150px";
         // document.body.appendChild(popup);
         // popupOpen = true;
+        popup = createPopup("This is the Lizard model.");
+        popup.style.left = "80px";
+        document.body.appendChild(popup);
+        popupOpen = true;
+        console.log("hit");
       }
      }
      else {
