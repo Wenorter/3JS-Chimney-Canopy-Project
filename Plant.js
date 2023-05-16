@@ -751,6 +751,9 @@ function initLizard(){
         child.castShadow = true;
         child.receiveShadow = true;
       }
+      mixer = new THREE.AnimationMixer(lizard);
+      const idle = mixer.clipAction(lizard.animations[0]); //grabs first animation from list
+      idle.play();
     } 
   );
 
