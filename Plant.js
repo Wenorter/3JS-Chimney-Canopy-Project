@@ -219,7 +219,7 @@ function initRaycaster(){
         popup.style.left = "80px";
         document.body.appendChild(popup);
         popupOpen = true;
-        console.log("hit");
+        console.log("hit plant");
       } else if (intersects[0].object.name == "Cylinder001") {
         popup = createPopup()
       } else if (intersects[0].object.name == "PinkLizard_MadeBy_Drywink") {
@@ -238,7 +238,7 @@ function initRaycaster(){
           lizardSound.setVolume(2);
           lizardSound.play();
         });
-        console.log("hit");
+        console.log("hit lizard");
       }
      }
      else {
