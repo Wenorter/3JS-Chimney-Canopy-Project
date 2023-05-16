@@ -206,8 +206,8 @@ function initRaycaster(){
      console.log(intersects[0]);
      if (intersects.length > 0){
       if(intersects[0].object.type == "Line") {
-        intersects[0].object.material.color.set(0xff0000);
-        popup = createPopup("Tree");
+      //  intersects[0].object.material.color.set(0xff0000);
+        popup = createPopup("This is the plant made with the lindermayer system. It is made by various rules declared by our group.");
         popup.style.left = "80px";
         document.body.appendChild(popup);
         popupOpen = true;
