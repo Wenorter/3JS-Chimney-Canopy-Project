@@ -226,16 +226,17 @@ function initRaycaster(){
         // popup.style.left = "150px";
         // document.body.appendChild(popup);
         // popupOpen = true;
+        
+        popup = createPopup("This is the Lizard model.");
+        popup.style.left = "80px";
+        document.body.appendChild(popup);
+        popupOpen = true;
         audioLoader.load('./music/lizard_sound.mp3', function(buffer){
           lizardSound.setBuffer(buffer);
           lizardSound.setLoop(false);
           lizardSound.setVolume(2);
           lizardSound.play();
         });
-        popup = createPopup("This is the Lizard model.");
-        popup.style.left = "80px";
-        document.body.appendChild(popup);
-        popupOpen = true;
         console.log("hit");
       }
      }
