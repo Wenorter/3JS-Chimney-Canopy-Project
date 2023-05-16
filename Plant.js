@@ -925,7 +925,7 @@ function animate(){
   composer.render(scene,camera);
   //Fireflies movement
   pLights.forEach( l => l.update());
-
+  //if (mixer) mixer.update(clock.getElapsedTime() * 0.00025);
   //grass shader animation
   // Hand a time variable to vertex shader for wind displacement.
 	leavesMaterial.uniforms.time.value = clock.getElapsedTime();
