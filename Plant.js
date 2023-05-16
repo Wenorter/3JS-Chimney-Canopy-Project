@@ -751,9 +751,9 @@ function initLizard(){
         child.castShadow = true;
         child.receiveShadow = true;
       }
-      mixer = new THREE.AnimationMixer(lizard);
-      const idle = mixer.clipAction(lizard.animations[0]); //grabs first animation from list
-      idle.play();
+    //  mixer = new THREE.AnimationMixer(lizard);
+     // const idle = mixer.clipAction(lizard.animations[0]); //grabs first animation from list
+     // idle.play();
     } 
   );
 
@@ -764,6 +764,20 @@ function initLizard(){
   scene.add(lizard);
   });
   console.log("initLizard() loaded."); 
+
+  //collision box for lizard
+ /* const boxGeometry = new THREE.BoxGeometry(20,7,15);
+  const material = new THREE.MeshBasicMaterial({
+    transparent: true,
+    opacity: 0,
+    color: 'pink'
+  });
+
+  const lizardBox = new THREE.Mesh(boxGeometry, material);
+  lizardBox.position.set(-10,5,-11);
+  lizardBox.name = "lizard";
+  scene.add(lizardBox);
+  console.log("initLizard() loaded."); */
 }
 
 //Base Ground Model
