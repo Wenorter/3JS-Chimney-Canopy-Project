@@ -25,6 +25,7 @@ var fireflyColorHex = new THREE.Color(0x33ff33);
 var intensity = 1;
 var rate = Math.random() * 0.005 + 0.005;
 
+var popupOpen = false, popup;
 //Animation mixer
 let mixer;
 
@@ -133,23 +134,49 @@ function initRaycaster(){
     console.log(pointer.x)
     console.log(pointer.y);
 
+    if(popupOpen) {
+      console.log("aaaaaaaaaaaaaaaaaaaa-?");
+      document.body.removeChild(popup);
+      popupOpen = false;
+    }
     raycaster.setFromCamera(pointer, camera);
     const intersects = raycaster.intersectObjects( scene.children, false );
     if (intersects.length > 0)
     {
       if (intersects[0].object.name == "plant")
       {
-        console.log("plant");
+        //  intersects[0].object.material.color.set(0xff0000);
+        popup = createPopup("This is the plant made with the lindermayer system. It is made by various rules declared by our group.");
+        popup.style.left = "80px";
+        document.body.appendChild(popup);
+        popupOpen = true;
+        console.log("hit plant");
       }
       else if (intersects[0].object.name == "lizard")
       {
-        console.log("lizard");
+       /* console.log("lizard");
+        audioLoader.load('./music/lizard_sound.mp3', function(buffer){
+          lizardSound.setBuffer(buffer);
+          lizardSound.setLoop(false);
+          lizardSound.setVolume(2);
+          lizardSound.play();
+        });*/
+        // popup = createPopup("PinkLizard_MadeBy_Drywink");
+        // popup.style.left = "150px";
+        // document.body.appendChild(popup);
+        // popupOpen = true;
+        
+        popup = createPopup("This is the Lizard model.");
+        popup.style.left = "80px";
+        document.body.appendChild(popup);
+        popupOpen = true;
         audioLoader.load('./music/lizard_sound.mp3', function(buffer){
           lizardSound.setBuffer(buffer);
           lizardSound.setLoop(false);
           lizardSound.setVolume(2);
           lizardSound.play();
         });
+        console.log("hit lizard");
       }
       else
       {
@@ -164,6 +191,20 @@ function initRaycaster(){
   //event listener
   window.addEventListener('mousedown', onPointerMove, false);
   console.log("initRaycaster() loaded.");
+}
+
+function createPopup(text) {
+  const popup = document.createElement('div');
+  popup.textContent = text;
+  popup.style.backgroundColor = '#f2f2f2';
+  popup.style.color = 'black';
+  popup.style.bottom = '0px';
+  popup.style.left = '0px';
+  popup.style.position = 'absolute';
+  popup.style.transform = 'translate(-50%, -50%)';
+  popup.style.padding = '20px';
+  popup.style.border = '1px solid black';
+  return popup;
 }
 
 function initKeyboardControls()
@@ -325,7 +366,11 @@ function initFireFlies()
 
     //light ball
     const geo = new THREE.SphereGeometry(0.05, 30, 30);
-    var mat = new THREE.MeshBasicMaterial({color: fireflyColorHex});
+    var mat = new THREE.MeshBasicMaterial({
+      color: fireflyColorHex,
+      transparent: true,
+      opacity: 1
+    });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.add(light);
 
