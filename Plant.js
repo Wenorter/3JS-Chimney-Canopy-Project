@@ -363,9 +363,10 @@ function initFireFlies()
   
   function getPointLight(){
 
+    //firefly light
     var light = new THREE.PointLight(fireflyColorHex, intensity, 15.0);
 
-    //light ball
+    //firefly mesh
     const geo = new THREE.SphereGeometry(0.05, 30, 30);
     var mat = new THREE.MeshBasicMaterial({
       color: fireflyColorHex,
@@ -375,6 +376,7 @@ function initFireFlies()
     const mesh = new THREE.Mesh(geo, mat);
     mesh.add(light);
 
+    //firefly starting position and orbit
     const circle = new THREE.Object3D();
     circle.position.x = (25 * Math.random()) - 12.5;
     circle.position.y = (5 * Math.random()) + 10;
@@ -387,26 +389,7 @@ function initFireFlies()
     circle.rotation.y = Math.random() * Math.PI * 2;
     circle.add(mesh)
 
-    var glowMat = new THREE.MeshBasicMaterial({
-        color: fireflyColorHex,
-        transparent: true,
-        opacity: 0.15
-      });
-
-      const glowMesh = new THREE.Mesh(geo, glowMat);
-      glowMesh.scale.multiplyScalar(1.5);
-      const glowMesh2 = new THREE.Mesh(geo, glowMat);
-      glowMesh2.scale.multiplyScalar(2.5);
-      const glowMesh3 = new THREE.Mesh(geo, glowMat);
-      glowMesh3.scale.multiplyScalar(4);
-      const glowMesh4 = new THREE.Mesh(geo, glowMat);
-      glowMesh4.scale.multiplyScalar(6);
-
-      mesh.add(glowMesh);
-      mesh.add(glowMesh2);
-      mesh.add(glowMesh3);
-      mesh.add(glowMesh4);
-
+    //firefly animation
     function update(){
         circle.rotation.z += rate;
         light.color = fireflyColorHex;
