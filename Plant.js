@@ -371,9 +371,10 @@ function initFireFlies()
   
   function getPointLight(){
 
+    //firefly light
     var light = new THREE.PointLight(fireflyColorHex, intensity, 15.0);
 
-    //light ball
+    //firefly mesh
     const geo = new THREE.SphereGeometry(0.05, 30, 30);
     var mat = new THREE.MeshBasicMaterial({
       color: fireflyColorHex,
@@ -383,6 +384,7 @@ function initFireFlies()
     const mesh = new THREE.Mesh(geo, mat);
     mesh.add(light);
 
+    //firefly starting position and orbit
     const circle = new THREE.Object3D();
     circle.position.x = (25 * Math.random()) - 12.5;
     circle.position.y = (5 * Math.random()) + 10;
@@ -395,6 +397,7 @@ function initFireFlies()
     circle.rotation.y = Math.random() * Math.PI * 2;
     circle.add(mesh)
 
+    //glow effect
     var glowMat = new THREE.MeshBasicMaterial({
         color: fireflyColorHex,
         transparent: true,
@@ -415,6 +418,7 @@ function initFireFlies()
       mesh.add(glowMesh3);
       mesh.add(glowMesh4);
 
+    //firefly animation
     function update(){
         circle.rotation.z += rate;
         light.color = fireflyColorHex;
@@ -554,7 +558,7 @@ function initGlassDome(){
 
   envTexture.mapping = THREE.EquirectangularReflectionMapping;
 
-  //create glass material and geometry
+  //create glass material
   const newGlassMat = new THREE.MeshPhysicalMaterial({
     color: 0xffffff,
     transmission: 1.0,
@@ -566,6 +570,8 @@ function initGlassDome(){
     depthWrite: false,
     envMap: envTexture
   });
+  
+  //create glass geometry
   const newGlassGeo = new THREE.BoxGeometry(46, 35, 42);
 
   //create glass mesh and add mesh to scene
