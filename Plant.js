@@ -302,9 +302,17 @@ function initEventListeners()
     dynamicLoadscreen.style.backgroundPositionY = -e.offsetY * 0.05 + "px";
   });
 
-  //Pointer Lock Controls
-  window.addEventListener("click", ()=> {
-    controls.lock();
+  //Pointer Lock Controls //was "click". ()=> {controls.lock();}
+  let isPointerLocked = false;
+  window.addEventListener("keydown", (event)=> {
+    if(event.code === "Space"){
+      if(isPointerLocked)
+      controls.unlock();
+      isPointerLocked = false;
+    }else{
+      controls.lock();
+      isPointerLocked = true;
+    }
   });
   console.log("initEventListeners() loaded.");
 }
