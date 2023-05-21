@@ -32,11 +32,9 @@ Detector = {
                 'Sorry, your browser doesn\'t support <a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation">WebGL</a><br/>',
                 'Please try with'
             ].join('\n');
-
         }
 
         return domElement;
-
     },
 
     addGetWebGLMessage: function(parameters) {

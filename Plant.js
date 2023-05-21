@@ -10,69 +10,34 @@ import  './Detector.js';
 //==================================
 //=======Lindenmayer Plant==========
 //==================================
-
-console.log(Detector);
-if(!Detector.webgl) Detector.addGetwebGLMessage();
-
 //Lighting
 var ambLight, ambLightColour, ambLightInten;
 var dirLight, dirLightColour,dirLightInten;
 //Grass Shader
 let vertexShader, fragmentShader, uniforms, leavesMaterial;
-//sky 
-var mouseX, mouseY, mesh;
-var start_time = Date.now();
 //Fireflies
 let pLight;
 const pLights = [];
- //Scene
- let scene = new THREE.Scene();
- let ratio = window.innerWidth/window.innerHeight;
-
- //create the perspective camera
- //for parameters see https://threejs.org/docs/#api/cameras/PerspectiveCamera
- // let camera = new THREE.PerspectiveCamera(45, ratio, 0.1, 1000);
- let camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
-   // camera.position.z = 6000;
- //set the camera position
- camera.position.set(0,50,50);
- // and the direction
- camera.lookAt(0,0,0);
-
- //Fog
- scene.fog = new THREE.FogExp2();
- scene.fog.color = new THREE.Color(0xca465c);
- scene.fog.density = 0.002;
-
- //Raycaster
- const raycaster = new THREE.Raycaster();
-
- //Webgl Renderer
- let renderer = new THREE.WebGLRenderer();
- renderer.antialias = true;
- renderer.precision = "highp";
- renderer.shadowMap.enabled = true;
- renderer.shadowMap.type = THREE.PCFSoftShadowMap;
- renderer.powerPreference = "high-performance";
- renderer.setPixelRatio(window.devicePixelRatio);
- renderer.setSize(window.innerWidth,window.innerHeight);
- document.body.appendChild(renderer.domElement);
 var fireflyColorHex = new THREE.Color(0x33ff33);
 var intensity = 1;
 var rate = Math.random() * 0.005 + 0.005;
-
 var popupOpen = false, popup;
 //Animation mixer
 let mixer;
-
 //Delta Time
 const clock = new THREE.Clock();
-
 //Loading Manager
 const loadingManager = new THREE.LoadingManager();
-
-init();
-
+//Scene
+let scene = new THREE.Scene();
+let ratio = window.innerWidth/window.innerHeight;
+//create the perspective camera
+//for parameters see https://threejs.org/docs/#api/cameras/PerspectiveCamera
+let camera = new THREE.PerspectiveCamera(45, ratio, 0.1, 1000);
+//set the camera position
+camera.position.set(0,10,50);
+// and the direction
+camera.lookAt(0,0,0);
 //Audio Loader 
 const listener = new THREE.AudioListener();
 //load audio file 
@@ -80,12 +45,22 @@ camera.add(listener);
 const music = new THREE.Audio(listener);
 const lizardSound = new THREE.Audio(listener);
 const audioLoader = new THREE.AudioLoader();
-
 //Fog
 scene.fog = new THREE.FogExp2();
 scene.fog.color = new THREE.Color(0xca465c);
 scene.fog.density = 0.002;
-
+//Raycaster
+const raycaster = new THREE.Raycaster();
+//Webgl Renderer
+let renderer = new THREE.WebGLRenderer();
+renderer.antialias = true;
+renderer.precision = "highp";
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.powerPreference = "high-performance";
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(window.innerWidth,window.innerHeight);
+document.body.appendChild(renderer.domElement);
 //First Person Controls
 //Forward or backward variable declaration
 var arrow;
@@ -98,24 +73,20 @@ const velocity = new THREE.Vector3(); //=0,0,0
 const direction = new THREE.Vector3();
 let prevTime = performance.now();
 var controls = new PointerLockControls(camera, document.body);
-
 //Effect Composer
 const composer = new EffectComposer(renderer);
-
 //Only add passes after render pass has been added first
 const renderPass = new RenderPass(scene, camera);
 composer.addPass(renderPass);
-
 const bloomPass = new UnrealBloomPass( 
   new THREE.Vector2( window.innerWidth, window.innerHeight ), 
   0.5, 
   0.4, 
   0.85);
 composer.addPass(bloomPass);
-
 //========DEBUG===========
 try {
-  
+  initClouds();
   initRaycaster();
   initKeyboardControls();
   initEventListeners();
@@ -138,17 +109,19 @@ catch (error) {
   console.log("Something went wrong during initialisation.");
   console.error(error);
 }
-function init() {
 
-  // camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 1, 3000);
-  // camera.position.z = 6000;
+console.log(Detector);
+if(!Detector.webgl) Detector.addGetwebGLMessage();
+
+function initClouds() {
+
   var textureLoader = new THREE.TextureLoader();
   var texture = textureLoader.load('./image/Cloud/cloud1.png');
   texture.magFilter = THREE.LinearMipMapLinearFilter;
   texture.minFilter = THREE.LinearMipMapLinearFilter;
   var fog = new THREE.Fog(0x4584b4, -0, 3000);
 
-  var material = new THREE.ShaderMaterial({
+  var cloudMaterial = new THREE.ShaderMaterial({
 
       uniforms: {
 
@@ -179,25 +152,18 @@ function init() {
   });
 
   let planeGeometry = new THREE.PlaneGeometry(5,5);
-  for (var i = 0; i < 20000; i++) {
-      let plane = new THREE.Mesh(planeGeometry, material);
-      plane.position.x = Math.random() * 1000-500;
-      plane.position.y = -150;
-      plane.position.z = Math.random() * 1000-500;
-      plane.rotation.y = Math.random() * 10;
-      plane.rotation.z = Math.random() * Math.PI;
-      plane.scale.x = plane.scale.y = Math.random() * Math.random() * 15 + 5;
-      scene.add(plane);
+  for (var i = 0; i < 3000; i++) {
+      let cloudsPlane = new THREE.Mesh(planeGeometry, cloudMaterial);
+      cloudsPlane.position.x = Math.random() * 1000-500;
+      cloudsPlane.position.y = -30;
+      cloudsPlane.position.z = Math.random() * 1000-500;
+      cloudsPlane.rotation.y = Math.random() * 10;
+      cloudsPlane.rotation.z = Math.random() * Math.PI;
+      cloudsPlane.scale.x = cloudsPlane.scale.y = Math.random() * Math.random() * 15 + 5;
+      scene.add(cloudsPlane);
     }
-  document.addEventListener('mousemove', onDocumentMouseMove, false);
-  window.addEventListener('resize', onWindowResize, false);
 
-}
-function onDocumentMouseMove(event) {
-  var windowHalfX = window.innerWidth / 2;
-  var windowHalfY = window.innerHeight / 2;
-  mouseX = (event.clientX - windowHalfX) * 0.25;
-  mouseY = (event.clientY - windowHalfY) * 0.15;
+  console.log("initClouds() loaded.");
 }
 //========================
 //First Person Controls and Raycaster
@@ -208,9 +174,7 @@ function initRaycaster(){
     pointer.y = -( event.clientY / window.innerHeight ) * 2 + 1;
     console.log(pointer.x)
     console.log(pointer.y);
-
     if(popupOpen) {
-      console.log("aaaaaaaaaaaaaaaaaaaa-?");
       document.body.removeChild(popup);
       popupOpen = false;
     }
@@ -229,6 +193,7 @@ function initRaycaster(){
       }
       else if (intersects[0].object.name == "lizard")
       {
+       
         popup = createPopup("This is the Pink Lizard. Pink Lizards are ferocious and curious predators.");
         popup.style.left = "80px";
         document.body.appendChild(popup);
@@ -255,7 +220,6 @@ function initRaycaster(){
   window.addEventListener('mousedown', onPointerMove, false);
   console.log("initRaycaster() loaded.");
 }
-
 function createPopup(text) {
   const popup = document.createElement('div');
   popup.textContent = text;
@@ -270,7 +234,6 @@ function createPopup(text) {
   popup.style.border = '1px solid black';
   return popup;
 }
-
 function initKeyboardControls()
 {
     // -- Keyboard controls --
@@ -290,7 +253,6 @@ function initKeyboardControls()
             break;
     }
   };
-
   const onKeyUp = (e) => {
     switch(e.code) {
         case "KeyW":
@@ -307,27 +269,20 @@ function initKeyboardControls()
             break;
     }
   };
-
   //First Person Control
   document.addEventListener("keydown", onKeyDown);
   document.addEventListener("keyup", onKeyUp);
-
   console.log("initKeyboardControls() loaded.");
 }
-
 function FPCanimate(){
     //FPS 
     const time = performance.now();
-
     // forward and backward decisions
     direction.z = Number(moveForward) - Number(moveBackword); //cast two variable to 1 to 0
     direction.x = Number(moveRight) - Number(moveLeft);
-
     // When the pointer turns ON
     if(controls.isLocked){
-
       const delta = (time - prevTime) / 1000;
-
       raycaster.setFromCamera( new THREE.Vector2(), camera );  
       scene.remove (arrow);
       arrow = new THREE.ArrowHelper(raycaster.ray.direction, raycaster.ray.origin, 0.25, 0x000000 );
@@ -335,27 +290,22 @@ function FPCanimate(){
       //Decay 
       velocity.z -= velocity.z * 5.0 * delta;
       velocity.x -= velocity.x * 5.0 * delta;
-
       if(moveForward || moveBackword){
           velocity.z -= direction.z * 200 * delta; //change movement speed here
       }
       if(moveRight || moveLeft){
           velocity.x -= direction.x * 200 * delta; //change movement speed here
       }
-
       controls.moveForward(-velocity.z * delta);
       controls.moveRight(-velocity.x * delta);
     } 
-
     prevTime = time;
 }
-
 //Event Listeners
 function initEventListeners()
 {
   //Window Resize
   window.addEventListener('resize', onWindowResize);
-
   //Audio
   window.addEventListener('click', () => {(initPlayMusic())}, {once: true});
   //Dynamic Loading Screen
@@ -364,7 +314,6 @@ function initEventListeners()
     dynamicLoadscreen.style.backgroundPositionX = -e.offsetX * 0.05 + "px";
     dynamicLoadscreen.style.backgroundPositionY = -e.offsetY * 0.05 + "px";
   });
-
   //Pointer Lock Controls //was "click". ()=> {controls.lock();}
   let isPointerLocked = false;
   window.addEventListener("keydown", (event)=> {
@@ -379,7 +328,6 @@ function initEventListeners()
   });
   console.log("initEventListeners() loaded.");
 }
-
 //Handle window resize
 function onWindowResize() 
 {
@@ -387,25 +335,21 @@ function onWindowResize()
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
-
 //Loading Screen
 function initLoadingScreen(){
-
   //Description disabled while loading screen is active
   const descriptionContainer = document.getElementById("info");
   descriptionContainer.style.display = "none";
-
   const progressBar = document.getElementById('progress-bar');
   loadingManager.onProgress = function(url, loaded, total)
   {
     progressBar.value = (loaded / total) * 100;
     console.log(`Started loading assets: ${url}`);
   }
-
   const progressBarContainer = document.querySelector(".progress-bar-container");
   loadingManager.onLoad = function(){
     //When loaded disable loading screen and enable description
-    descriptionContainer.style.display = "true";
+    descriptionContainer.style.display = "block";
     progressBarContainer.style.opacity = "0";
     setTimeout(callback, 4000); //fade-out animation 4sec, meaning this has to be 4000 
   }
@@ -416,27 +360,22 @@ function initLoadingScreen(){
   }
   console.log("initLoadingScreen() loaded.");
 }
-
 //Lighting
 function initLights(){
   ambLight = new THREE.AmbientLight(ambLightColour, ambLightInten);
   scene.add(ambLight);
-
   dirLight = new THREE.DirectionalLight(dirLightColour, dirLightInten);
   dirLight.position.set(0, 500, 500);
   scene.add(dirLight);
   console.log("initLights() loaded.");
 }
-
 //Fireflies
 function initFireFlies()
 {
   
   function getPointLight(){
-
     //firefly light
     var light = new THREE.PointLight(fireflyColorHex, intensity, 15.0);
-
     //firefly mesh
     const geo = new THREE.SphereGeometry(0.05, 30, 30);
     var mat = new THREE.MeshBasicMaterial({
@@ -446,7 +385,6 @@ function initFireFlies()
     });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.add(light);
-
     //firefly starting position and orbit
     const circle = new THREE.Object3D();
     circle.position.x = (25 * Math.random()) - 12.5;
@@ -466,7 +404,6 @@ function initFireFlies()
       transparent: true,
       opacity: 0.15
     });
-
     const glowMesh = new THREE.Mesh(geo, glowMat);
     glowMesh.scale.multiplyScalar(1.5);
     const glowMesh2 = new THREE.Mesh(geo, glowMat);
@@ -475,13 +412,10 @@ function initFireFlies()
     glowMesh3.scale.multiplyScalar(4);
     const glowMesh4 = new THREE.Mesh(geo, glowMat);
     glowMesh4.scale.multiplyScalar(6);
-
     mesh.add(glowMesh);
     mesh.add(glowMesh2);
     mesh.add(glowMesh3);
     mesh.add(glowMesh4);
-
-
     //firefly animation
     function update(){
         circle.rotation.z += rate;
@@ -490,13 +424,11 @@ function initFireFlies()
         mat.color = fireflyColorHex;
         glowMat.color = fireflyColorHex;
     }
-
     return{
         obj: circle,
         update,
     }
   }
-
   for(let i = 0; i< 10; i+= 1){
     pLight = getPointLight()
     scene.add(pLight.obj);
@@ -504,7 +436,6 @@ function initFireFlies()
   }
   console.log("initFireFlies() loaded.");
 }
-
 //Skybox
 function initSkybox(){
   //adding textures 
@@ -519,16 +450,13 @@ function initSkybox(){
   ])
   console.log("initSkybox() loaded."); 
 }
-
 //Grass Shader
 function initGrassShader(){
-
   vertexShader = `
     varying vec2 vUv;
     uniform float time;
     
     void main() {
-
       vUv = uv;
       
       // VERTEX POSITION
@@ -550,10 +478,8 @@ function initGrassShader(){
       
       vec4 modelViewPosition = modelViewMatrix * mvPosition;
       gl_Position = projectionMatrix * modelViewPosition;
-
     }
   `;
-
   fragmentShader = `
     varying vec2 vUv;
     
@@ -563,45 +489,34 @@ function initGrassShader(){
       gl_FragColor = vec4(baseColor * clarity, 1 );
     }
   `;
-
   uniforms = {
     time: {
       value: 0
     }
   }
-
   leavesMaterial = new THREE.ShaderMaterial({
     vertexShader,
     fragmentShader,
     uniforms,
     side: THREE.DoubleSide
   });
-
   console.log("initGrassShader() loaded."); 
 }
-
 //Grass Plane
 function initGrassPlane(){
   const instanceNumber = 500; //was 5000
   const grass = new THREE.Object3D();
-
   const geometry = new THREE.PlaneGeometry(0.1, 1, 1, 4);// was 0.1, 1, 1, 4
   geometry.translate(0, 3, 0); // move grass blade geometry lowest point at 0. // original position is 0, 0.5, 0
-
   const instancedMesh = new THREE.InstancedMesh(geometry, leavesMaterial, instanceNumber);
-
   scene.add(instancedMesh);
-
   //Position and scale the grass blade instances randomly.
-
   for (let i = 0 ; i < instanceNumber; i++) {
-
     grass.position.set(
       ( Math.random() - 0.5 ) * 40, //original rand is ( Math.random() - 0.5 ) * 10, 0, ( Math.random() - 0.5 ) * 10
       0,
       ( Math.random() - 0.5 ) * 40
     ); 
-
     grass.userData.name = "grassPlane";
     grass.scale.setScalar(0.5 + Math.random() * 0.5);
     grass.rotation.y = Math.random() * Math.PI;
@@ -610,18 +525,14 @@ function initGrassPlane(){
   }
   console.log("initGrassPlane() loaded."); 
 }
-
 //Glass Dome around base, lizard and plant
 function initGlassDome(){
   //create environment map
   const envMapLoader = new THREE.TextureLoader();
-
   const envTexture = envMapLoader.load(
     "textures/Sunset.jpg"
   )
-
   envTexture.mapping = THREE.EquirectangularReflectionMapping;
-
   //create glass material
   const newGlassMat = new THREE.MeshPhysicalMaterial({
     color: 0xffffff,
@@ -637,17 +548,14 @@ function initGlassDome(){
   
   //create glass geometry
   const newGlassGeo = new THREE.BoxGeometry(46, 35, 42);
-
   //create glass mesh and add mesh to scene
   const newGlassContainer = new THREE.Mesh(newGlassGeo, newGlassMat);
   newGlassContainer.position.set(0, 15, 0);
   scene.add(newGlassContainer);
 }
-
 //L-System Plant
 function initLindenmayerPlant(){
 //Reference: https://codepen.io/mikkamikka/pen/DrdzVK
-
   function Params() {
     this.iterations = 2;
     this.theta = 18;
@@ -658,16 +566,13 @@ function initLindenmayerPlant(){
     this.constantWidth = true;
     this.deltarota = 30;
   }
-
   function Rules()  {
     this.axiom = 'F';
     this.mainRule = 'FF-[-F+F+F]+[+F-F-F]';
     this.Rule2 = '';
   }
-
   var rules = new Rules();
   var params = new Params();
-
   function GetAxiomTree() {
     var Waxiom = rules.axiom;
     var newf = rules.mainRule;
@@ -692,30 +597,25 @@ function initLindenmayerPlant(){
     }
     return Waxiom;
   }
-
   function DrawTheTree(plantGeometry, x_init, y_init, z_init){   
     let plantVertices = plantGeometry;
     var Wrule = GetAxiomTree();
     var n = Wrule.length;
     var stackA = [];
     var stackV = []; 
-
     var theta = params.theta * Math.PI / 180; 
     var scale = params.scale;
     var angle = params.angle * Math.PI / 180;
-
     var x0 = x_init; var y0 = y_init; var z0 = z_init;
     var rota = 0, rota2 = 0,
         deltarota = 18 * Math.PI/180;  
     var axis_y = new THREE.Vector3( 0, 1, 0 );
     var axis_delta = new THREE.Vector3(),
       prev_startpoint = new THREE.Vector3();
-
     var startpoint = new THREE.Vector3(x0,y0,z0), 
         endpoint = new THREE.Vector3();
     var bush_mark;
     var vector_delta = new THREE.Vector3(scale, scale, 0);
-
     for (var j=0; j<n; j++){        
         var a = Wrule[j];
         if (a == "+")
@@ -732,7 +632,6 @@ function initLindenmayerPlant(){
           
           plantVertices.push(startpoint.clone());
           plantVertices.push(endpoint.clone());
-
           prev_startpoint.copy(startpoint);
           startpoint.copy(endpoint);
           axis_delta = new THREE.Vector3().copy(a).normalize();
@@ -749,7 +648,6 @@ function initLindenmayerPlant(){
           
           plantVertices.push(startpoint.clone());
           plantVertices.push(endpoint.clone());          
-
           rota2 += 45 * Math.PI/180;
         }
         if (a == "%"){}
@@ -766,7 +664,6 @@ function initLindenmayerPlant(){
     }
   return plantVertices;
   }
-
   function setRules(){
     rules.axiom = "F";
     rules.mainRule = "F-F[-F+F[LLLLLLLL]]++F[+F[LLLLLLLL]]--F[+F[LLLLLLLL]]";
@@ -775,17 +672,13 @@ function initLindenmayerPlant(){
     params.theta = 30;
     params.scale = 6;    
   }
-
   function plantInit() {
-
   setRules();
-
   let plantGeometry = [];
   var material = new THREE.LineBasicMaterial({color: 0xA91B60}); //pink
   material.linewidth = 3;
   plantGeometry = DrawTheTree(plantGeometry, 0, -150, 0);  
   var geometry = new THREE.BufferGeometry().setFromPoints(plantGeometry);
-
   //plant = new THREE.Mesh(line_geometry, material);
   var plant = new THREE.Line(geometry, material);
   plant.position.set(8,7,-6);
@@ -796,7 +689,6 @@ function initLindenmayerPlant(){
   plantInit();
   console.log("initLindenmayerPlant() loaded."); 
 }
-
 //Pink Lizard
 function initLizard(){
   const fbxLoader = new FBXLoader(loadingManager);
@@ -813,16 +705,12 @@ function initLizard(){
       idle.play();
     } 
   );
-
   lizard.userData.name = "Pink Lizard";
   lizard.scale.setScalar(0.12);
   lizard.position.set(-10, 2.2, -10);
   lizard.rotation.set(0, 0, 0);
-  console.log(lizard);
   scene.add(lizard);
   });
-
-
   //collision box for lizard
   const boxGeometry = new THREE.BoxGeometry(20,7,15);
   const material = new THREE.MeshBasicMaterial({
@@ -830,20 +718,17 @@ function initLizard(){
     opacity: 0,
     color: 'pink'
   });
-
   const lizardBox = new THREE.Mesh(boxGeometry, material);
   lizardBox.position.set(-10,5,-11);
   lizardBox.name = "lizard";
   scene.add(lizardBox);
   console.log("initLizard() loaded."); 
 }
-
 //Base Ground Model
 function initBaseGround(){
   const fbxLoader = new FBXLoader(loadingManager);
     fbxLoader.setResourcePath("./textures/base/");
     fbxLoader.load('./model/chimney_canopy_base.fbx', function(chimneyCanopyBase) {
-
     chimneyCanopyBase.traverse(function(child){
         if (child.isMesh) 
         {
@@ -852,7 +737,6 @@ function initBaseGround(){
         }
       } 
     );
-
     chimneyCanopyBase.userData.name = "Chimney Canopy Base";
     chimneyCanopyBase.scale.setScalar(0.04);
     dirLight.target = chimneyCanopyBase;
@@ -860,11 +744,9 @@ function initBaseGround(){
   });
   console.log("initBaseGroundModel() loaded."); 
 }
-
 function initMegastructure(){
   const fbxLoader = new FBXLoader(loadingManager);
     fbxLoader.load('./model/megastructure.fbx', function(megastructure) {
-
       megastructure.traverse(function(child){
         if (child.isMesh) 
         {
@@ -873,7 +755,6 @@ function initMegastructure(){
         }
       } 
     );
-
     megastructure.userData.name = "5P Megastructure";
     megastructure.position.set(500, 0, -700);
     megastructure.scale.setScalar(10);
@@ -881,13 +762,11 @@ function initMegastructure(){
   });
   console.log("initMegastructure() loaded."); 
 }
-
 //Claw Rock Terrain
 function initClawRockTerrain(){
   const fbxLoader = new FBXLoader(loadingManager);
   fbxLoader.setResourcePath("./textures/claw_rock/");
   fbxLoader.load('./model/claw_rock.fbx', function(clawRockTerrain) {
-
     clawRockTerrain.traverse(function(child){
       if (child.isMesh) 
       {
@@ -896,7 +775,6 @@ function initClawRockTerrain(){
       }
     } 
   );
-
     clawRockTerrain.userData.name = "Claw Rock Terrain";
     clawRockTerrain.scale.setScalar(0.3);
     clawRockTerrain.position.set(0, 0, 0);
@@ -904,7 +782,6 @@ function initClawRockTerrain(){
   });
   console.log("initClawRockTerrain() loaded."); 
 }
-
 //Music Player
 function initPlayMusic(){
   audioLoader.load('./music/progfox-overcast.mp3', function(buffer){
@@ -915,12 +792,10 @@ function initPlayMusic(){
   });
   console.log("initPlayMusic() loaded."); 
 }
-
 //Dat GUI
 function initGui()
 {
   const gui = new GUI();
-
 //parameters for GUI
 //colour variables
   let params = {
@@ -940,9 +815,7 @@ function initGui()
     bloomRadius: 0.4,
     bloomThreshold: 0.85
   }
-
   let colourFolder = gui.addFolder("Scene Light");
-
   //Ambient Light Control
   let ambLightFolder = colourFolder.addFolder("Ambient Light");
   ambLightFolder.addColor(params, "ambLightColour").name("AL Colour").onChange(() => 
@@ -953,7 +826,6 @@ function initGui()
   {
       ambLight.intensity = params.ambLightInten;
   });
-
   //Directional Light Control
   let dirLightFolder = colourFolder.addFolder("Directional Light");
   dirLightFolder.addColor(params, "dirLightColour").name("Directional Light").onChange(() => 
@@ -964,7 +836,6 @@ function initGui()
   {
     dirLight.intensity = params.dirLightInten;
   })
-
   //Fog Control
   let fogFolder = gui.addFolder("Fog Weather");
    fogFolder.addColor(params, "fogColor").name("Fog Colour").onChange(function(){
@@ -973,7 +844,6 @@ function initGui()
    fogFolder.add(params, "fogDensity", 0, 0.01, 0.001).name("Fog Density").onChange(function(){
        scene.fog.density = params.fogDensity;
    });
-
   //Fireflies Control
   let fireflyFolder = gui.addFolder("Fireflies");
   fireflyFolder.addColor(params, 'fireflyColor').name("Color").onChange(() => {
@@ -987,7 +857,6 @@ function initGui()
   {
       intensity = params.fireflyIntensity;
   });
-
   //Bloom Control
   let bloomFolder = gui.addFolder("Bloom");
   bloomFolder.add(params, "bloomStrength", 0, 5, 0.1).name("Strength").onChange(() =>
@@ -1002,14 +871,11 @@ function initGui()
   {
       bloomPass.threshold = params.bloomThreshold;
   });
-
   console.log("initGui() loaded."); 
 }
-
 //Animate
 function animate(){
   requestAnimationFrame(animate);
-
   composer.render(scene,camera);
   //Fireflies movement
   pLights.forEach( l => l.update());
@@ -1021,4 +887,3 @@ function animate(){
   leavesMaterial.uniformsNeedUpdate = true;
   FPCanimate();
 }
-

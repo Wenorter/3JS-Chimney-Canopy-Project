@@ -12,20 +12,31 @@
     </script>
     <link type="text/css" rel="stylesheet" href="stylesheet.css">	
     <script id="vs" type="x-shader/x-vertex">
-      varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);}
+
+      varying vec2 vUv; void main() { 
+        vUv = uv; 
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+
     </script>
-    
     <script id="fs" type="x-shader/x-fragment">
       
-      uniform sampler2D map; uniform vec3 fogColor; uniform float fogNear; uniform float fogFar; varying vec2 vUv; void main() { float depth = gl_FragCoord.z / gl_FragCoord.w; float fogFactor = smoothstep( fogNear, fogFar, depth ); gl_FragColor = texture2D(
-        map, vUv ); gl_FragColor.w *= pow( gl_FragCoord.z, 20.0 ); gl_FragColor = mix( gl_FragColor, vec4( fogColor, gl_FragColor.w ), fogFactor ); }
+      uniform sampler2D map; 
+      uniform vec3 fogColor; 
+      uniform float fogNear; 
+      uniform float fogFar; 
+      varying vec2 vUv; 
+        void main() { 
+          float depth = gl_FragCoord.z / gl_FragCoord.w; 
+          float fogFactor = smoothstep( fogNear, fogFar, depth ); 
+          gl_FragColor = texture2D(map, vUv); 
+          gl_FragColor.w *= pow( gl_FragCoord.z, 20.0 ); 
+          gl_FragColor = mix( gl_FragColor, vec4( fogColor, gl_FragColor.w ), fogFactor * 0.5); 
+        }
         
       </script>
-
-    <script  src="Detector.js"></script>
-    
-    <script type="module" src="Plant.js"></script>
-
+      <script  src="Detector.js"></script>    
+      <script type="module" src="Plant.js"></script>
   </head>
   <body>
     <div class="progress-bar-container">
@@ -34,8 +45,8 @@
     </div>
 	  <link rel="shortcut icon" href="#">
     <div id="info">
-      <p>This is a plant generation using Lindenmayer system<br>
-      use left button to rotate the scene, scroll to zoom in/out</p>
+      <p>This is a an interactive showcase.<br>
+      Use WASD keys to walk around, use "Space" bar to toggle Pointer Lock Controls.</p>
     </div>	
   </script>
   </body>
