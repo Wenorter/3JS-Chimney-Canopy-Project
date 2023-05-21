@@ -154,18 +154,6 @@ function initRaycaster(){
       }
       else if (intersects[0].object.name == "lizard")
       {
-       /* console.log("lizard");
-        audioLoader.load('./music/lizard_sound.mp3', function(buffer){
-          lizardSound.setBuffer(buffer);
-          lizardSound.setLoop(false);
-          lizardSound.setVolume(2);
-          lizardSound.play();
-        });*/
-        // popup = createPopup("PinkLizard_MadeBy_Drywink");
-        // popup.style.left = "150px";
-        // document.body.appendChild(popup);
-        // popupOpen = true;
-        
         popup = createPopup("This is the Pink Lizard. Pink Lizards are ferocious and curious predators.");
         popup.style.left = "80px";
         document.body.appendChild(popup);
@@ -397,11 +385,7 @@ function initFireFlies()
     circle.rotation.y = Math.random() * Math.PI * 2;
     circle.add(mesh)
 
-<<<<<<< HEAD
-    //glow effect
-=======
-    //firefly glowing effect
->>>>>>> Ryunosuke-Grass-GUI
+    //firefly glow effect
     var glowMat = new THREE.MeshBasicMaterial({
       color: fireflyColorHex,
       transparent: true,
