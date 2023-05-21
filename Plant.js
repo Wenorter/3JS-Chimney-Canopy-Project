@@ -397,26 +397,31 @@ function initFireFlies()
     circle.rotation.y = Math.random() * Math.PI * 2;
     circle.add(mesh)
 
+<<<<<<< HEAD
     //glow effect
+=======
+    //firefly glowing effect
+>>>>>>> Ryunosuke-Grass-GUI
     var glowMat = new THREE.MeshBasicMaterial({
-        color: fireflyColorHex,
-        transparent: true,
-        opacity: 0.15
-      });
+      color: fireflyColorHex,
+      transparent: true,
+      opacity: 0.15
+    });
 
-      const glowMesh = new THREE.Mesh(geo, glowMat);
-      glowMesh.scale.multiplyScalar(1.5);
-      const glowMesh2 = new THREE.Mesh(geo, glowMat);
-      glowMesh2.scale.multiplyScalar(2.5);
-      const glowMesh3 = new THREE.Mesh(geo, glowMat);
-      glowMesh3.scale.multiplyScalar(4);
-      const glowMesh4 = new THREE.Mesh(geo, glowMat);
-      glowMesh4.scale.multiplyScalar(6);
+    const glowMesh = new THREE.Mesh(geo, glowMat);
+    glowMesh.scale.multiplyScalar(1.5);
+    const glowMesh2 = new THREE.Mesh(geo, glowMat);
+    glowMesh2.scale.multiplyScalar(2.5);
+    const glowMesh3 = new THREE.Mesh(geo, glowMat);
+    glowMesh3.scale.multiplyScalar(4);
+    const glowMesh4 = new THREE.Mesh(geo, glowMat);
+    glowMesh4.scale.multiplyScalar(6);
 
-      mesh.add(glowMesh);
-      mesh.add(glowMesh2);
-      mesh.add(glowMesh3);
-      mesh.add(glowMesh4);
+    mesh.add(glowMesh);
+    mesh.add(glowMesh2);
+    mesh.add(glowMesh3);
+    mesh.add(glowMesh4);
+
 
     //firefly animation
     function update(){
